@@ -670,7 +670,7 @@ class OasisProfileGenerator:
     
     def _get_system_prompt(self, is_individual: bool) -> str:
         """获取系统提示词"""
-        base_prompt = "你是社交媒体用户画像生成专家。生成详细、真实的人设用于舆论模拟,最大程度还原已有现实情况。必须返回有效的JSON格式，所有字符串值不能包含未转义的换行符。使用中文。"
+        base_prompt = "你是社交媒体用户画像生成专家。生成详细、真实的人设用于舆论模拟,最大程度还原已有现实情况。必须返回有效的JSON格式，所有字符串值不能包含未转义的换行符。请使用意大利语 (Italiano) 生成内容，并融入意大利真实的社会背景：例如 un cittadino o ente nel Comune (es. Siena), la cui vita è regolamentata dal sindaco e dalla giunta, che paga tasse come la TARI, ed è influenzato dall'opinione pubblica locale."
         return base_prompt
     
     def _build_individual_persona_prompt(
@@ -686,7 +686,7 @@ class OasisProfileGenerator:
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "无"
         context_str = context[:3000] if context else "无额外上下文"
         
-        return f"""为实体生成详细的社交媒体用户人设,最大程度还原已有现实情况。
+        return f"""为实体生成详细的本地社群用户人设（Contesto: Comune Italiano, es. Siena）,最大程度还原已有现实情况。
 
 实体名称: {entity_name}
 实体类型: {entity_type}
@@ -701,7 +701,7 @@ class OasisProfileGenerator:
 1. bio: 社交媒体简介，200字
 2. persona: 详细人设描述（2000字的纯文本），需包含:
    - 基本信息（年龄、职业、教育背景、所在地）
-   - 人物背景（重要经历、与事件的关联、社会关系）
+   - 人物背景（重要经历、社会关系、身份特质：come Partita IVA, Pensionato INPS, Studente Fuori Sede, ecc.）
    - 性格特征（MBTI类型、核心性格、情绪表达方式）
    - 社交媒体行为（发帖频率、内容偏好、互动风格、语言特点）
    - 立场观点（对话题的态度、可能被激怒/感动的内容）
@@ -717,7 +717,7 @@ class OasisProfileGenerator:
 重要:
 - 所有字段值必须是字符串或数字，不要使用换行符
 - persona必须是一段连贯的文字描述
-- 使用中文（除了gender字段必须用英文male/female）
+- 使用意大利语（Italiano）输出所有文本（除了gender字段必须用英文male/female）
 - 内容要与实体信息保持一致
 - age必须是有效的整数，gender必须是"male"或"female"
 """
@@ -735,7 +735,7 @@ class OasisProfileGenerator:
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "无"
         context_str = context[:3000] if context else "无额外上下文"
         
-        return f"""为机构/群体实体生成详细的社交媒体账号设定,最大程度还原已有现实情况。
+        return f"""为机构/群体实体生成详细的官方账号设定（Contesto: Pubblica Amministrazione / Comune Italiano, es. Siena）,最大程度还原已有现实情况。
 
 实体名称: {entity_name}
 实体类型: {entity_type}
@@ -766,7 +766,7 @@ class OasisProfileGenerator:
 重要:
 - 所有字段值必须是字符串或数字，不允许null值
 - persona必须是一段连贯的文字描述，不要使用换行符
-- 使用中文（除了gender字段必须用英文"other"）
+- 使用意大利语（Italiano）输出所有文本（除了gender字段必须用英文"other"）
 - age必须是整数30，gender必须是字符串"other"
 - 机构账号发言要符合其身份定位"""
     

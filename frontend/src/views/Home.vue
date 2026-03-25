@@ -26,10 +26,10 @@
           
           <div class="hero-desc">
             <p>
-              即使只有一段文字，<span class="highlight-bold">MiroFish</span> 也能基于其中的现实种子，全自动生成与之对应的至多<span class="highlight-orange">百万级Agent</span>构成的平行世界。通过上帝视角注入变量，在复杂的群体交互中寻找动态环境下的<span class="highlight-code">“局部最优解”</span>
+              Anche partendo da un singolo documento, <span class="highlight-bold">CivesAI</span> genera in automatico un ecosistema parallelo di <span class="highlight-orange">cittadini digitali</span>. Attraverso la <span class="highlight-code">Modalità Amministratore</span>, puoi iniettare nuove policy (ZTL, TARI, cantieri) e trovare la <span class="highlight-code">"soluzione ottimale"</span> nelle reti sociali del tuo Comune.
             </p>
             <p class="slogan-text">
-              让未来在 Agent 群中预演，让决策在百战后胜出<span class="blinking-cursor">_</span>
+              Fai applicare le policy ai cittadini digitali, vinci le sfide reali<span class="blinking-cursor">_</span>
             </p>
           </div>
            
@@ -82,36 +82,36 @@
               <div class="workflow-item">
                 <span class="step-num">01</span>
                 <div class="step-info">
-                  <div class="step-title">图谱构建</div>
-                  <div class="step-desc">现实种子提取 & 个体与群体记忆注入 & GraphRAG构建</div>
+                  <div class="step-title">Analisi Territoriale</div>
+                  <div class="step-desc">Estrazione dati & Iniezione memorie civiche & Creazione GraphRAG</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">02</span>
                 <div class="step-info">
-                  <div class="step-title">环境搭建</div>
-                  <div class="step-desc">实体关系抽取 & 人设生成 & 环境配置Agent注入仿真参数</div>
+                  <div class="step-title">Configurazione Parametri</div>
+                  <div class="step-desc">Estrazione ruoli PA & Generazione profili (Partite IVA, studenti, ecc.)</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">03</span>
                 <div class="step-info">
-                  <div class="step-title">开始模拟</div>
-                  <div class="step-desc">双平台并行模拟 & 自动解析预测需求 & 动态更新时序记忆</div>
+                  <div class="step-title">Avvio Simulazione</div>
+                  <div class="step-desc">Dinamiche socio-amministrative parallele & Memoria locale aggiornata</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">04</span>
                 <div class="step-info">
-                  <div class="step-title">报告生成</div>
-                  <div class="step-desc">ReportAgent拥有丰富的工具集与模拟后环境进行深度交互</div>
+                  <div class="step-title">Relazione Tecnica</div>
+                  <div class="step-desc">Generazione report burocratico previsionale sulle reazioni della cittadinanza</div>
                 </div>
               </div>
               <div class="workflow-item">
                 <span class="step-num">05</span>
                 <div class="step-info">
-                  <div class="step-title">深度互动</div>
-                  <div class="step-desc">与模拟世界中的任意一位进行对话 & 与ReportAgent进行对话</div>
+                  <div class="step-title">Focus Group Digitale</div>
+                  <div class="step-desc">Dialogo diretto con i cittadini simulati o con l'Ufficiale incaricato</div>
                 </div>
               </div>
             </div>

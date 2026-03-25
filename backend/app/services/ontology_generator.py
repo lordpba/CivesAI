@@ -32,9 +32,9 @@ ONTOLOGY_SYSTEM_PROMPT = """你是一个专业的知识图谱本体设计专家�
 - 特定群体代表（如校友会、粉丝团、维权群体等）
 
 **不可以是**：
-- 抽象概念（如"舆论"、"情绪"、"趋势"）
-- 主题/话题（如"学术诚信"、"教育改革"）
-- 观点/态度（如"支持方"、"反对方"）
+- 抽象概念（如"舆论"、"情绪"、"趋势"、"ZTL"、"Tari" - questi sono concetti o argomenti, non entità che parlano）
+- 主题/话题（如"Tasse Comunali", "Viabilità"）
+- 观点/态度（如"Favorevole al Sindaco", "Contro la ZTL"）
 
 ## 输出格式
 
@@ -111,29 +111,28 @@ B. **具体类型（8个，根据文本内容设计）**：
 - **注意**：属性名不能使用 `name`、`uuid`、`group_id`、`created_at`、`summary`（这些是系统保留字）
 - 推荐使用：`full_name`, `title`, `role`, `position`, `location`, `description` 等
 
-## 实体类型参考
+## 实体类型参考 (Contesto: Comune italiano, es. Siena)
 
 **个人类（具体）**：
-- Student: 学生
-- Professor: 教授/学者
-- Journalist: 记者
-- Celebrity: 明星/网红
-- Executive: 高管
-- Official: 政府官员
-- Lawyer: 律师
-- Doctor: 医生
+- StudenteFuoriSede: Studenti universitari fuori sede
+- PensionatoINPS: Persona anziana in pensione
+- PartitaIVA: Professionista, commerciante o lavoratore autonomo
+- CittadinoResidente: Cittadino locale generico
+- Sindaco: Il Sindaco o membro della Giunta
+- GiornalistaLocale: Giornalista della cronaca locale
+- DipendentePubblico: Lavoratore del Comune o statale
 
 **个人类（兜底）**：
 - Person: 任何自然人（不属于上述具体类型时使用）
 
 **组织类（具体）**：
-- University: 高校
-- Company: 公司企业
-- GovernmentAgency: 政府机构
-- MediaOutlet: 媒体机构
-- Hospital: 医院
-- School: 中小学
-- NGO: 非政府组织
+- Comune: Ente locale, Comune (es. Comune di Siena)
+- PoliziaLocale: Vigili urbani
+- PartitoPolitico: Sezione locale di un partito
+- MediaLocale: Testata giornalistica della città
+- ASL: Azienda Sanitaria Locale
+- ComitatoVerde: Associazione di cittadini o di quartiere
+- AssociazioneCategoria: Es. Confcommercio, Confindustria
 
 **组织类（兜底）**：
 - Organization: 任何组织机构（不属于上述具体类型时使用）

@@ -15,7 +15,7 @@
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: '图谱', split: '双栏', workbench: '工作台' }[mode] }}
+            {{ { graph: 'Grafo Relazionale', split: 'Vista Condivisa', workbench: 'Modalità Amministratore' }[mode] }}
           </button>
         </div>
       </div>
@@ -91,7 +91,7 @@ const viewMode = ref('split') // graph | split | workbench
 
 // Step State
 const currentStep = ref(1) // 1: 图谱构建, 2: 环境搭建, 3: 开始模拟, 4: 报告生成, 5: 深度互动
-const stepNames = ['图谱构建', '环境搭建', '开始模拟', '报告生成', '深度互动']
+const stepNames = ['Analisi Territoriale', 'Configurazione Parametri', 'Avvio Simulazione', 'Relazione Tecnica', 'Focus Group Digitale']
 
 // Data State
 const currentProjectId = ref(route.params.projectId)
@@ -130,11 +130,11 @@ const statusClass = computed(() => {
 })
 
 const statusText = computed(() => {
-  if (error.value) return 'Error'
-  if (currentPhase.value >= 2) return 'Ready'
-  if (currentPhase.value === 1) return 'Building Graph'
-  if (currentPhase.value === 0) return 'Generating Ontology'
-  return 'Initializing'
+  if (error.value) return 'Errore di Sistema'
+  if (currentPhase.value >= 2) return 'Operativo'
+  if (currentPhase.value === 1) return 'Elaborazione Grafo'
+  if (currentPhase.value === 0) return 'Generazione Ontologia PA'
+  return 'Inizializzazione Protocollo'
 })
 
 // --- Helpers ---
