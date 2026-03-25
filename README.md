@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./static/image/MiroFish_logo_compressed.jpeg" alt="CivesAI Logo" width="75%"/>
+<img src="./static/image/civesai_logo.png" alt="CivesAI Logo" width="75%"/>
 
 *CivesAI: Il Gemello Digitale e Predittivo per la Pubblica Amministrazione*
 
