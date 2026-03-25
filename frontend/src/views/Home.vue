@@ -2,10 +2,10 @@
   <div class="home-container">
     <!-- 顶部导航栏 -->
     <nav class="navbar">
-      <div class="nav-brand">MIROFISH</div>
+      <div class="nav-brand">CIVESAI</div>
       <div class="nav-links">
-        <a href="https://github.com/666ghj/MiroFish" target="_blank" class="github-link">
-          访问我们的Github主页 <span class="arrow">↗</span>
+        <a href="https://github.com/lordpba/CivesAI" target="_blank" class="github-link">
+          GitHub <span class="arrow">↗</span>
         </a>
       </div>
     </nav>
@@ -15,13 +15,13 @@
       <section class="hero-section">
         <div class="hero-left">
           <div class="tag-row">
-            <span class="orange-tag">简洁通用的群体智能引擎</span>
-            <span class="version-text">/ v0.1-预览版</span>
+            <span class="orange-tag">Motore Predittivo per la PA</span>
+            <span class="version-text">/ v1.0-Release</span>
           </div>
           
           <h1 class="main-title">
-            上传任意报告<br>
-            <span class="gradient-text">即刻推演未来</span>
+            Carica una delibera<br>
+            <span class="gradient-text">Prevedi l'impatto reale</span>
           </h1>
           
           <div class="hero-desc">
@@ -39,7 +39,7 @@
         <div class="hero-right">
           <!-- Logo 区域 -->
           <div class="logo-container">
-            <img src="../assets/logo/MiroFish_logo_left.jpeg" alt="MiroFish Logo" class="hero-logo" />
+            <img src="../assets/logo/civesai_logo.png" alt="CivesAI Logo" class="hero-logo" />
           </div>
           
           <button class="scroll-down-btn" @click="scrollToBottom">
@@ -56,27 +56,27 @@
             <span class="status-dot">■</span> 系统状态
           </div>
           
-          <h2 class="section-title">准备就绪</h2>
+          <h2 class="section-title">Sistema Operativo</h2>
           <p class="section-desc">
-            预测引擎待命中，可上传多份非结构化数据以初始化模拟序列
+            Motore diagnostico in attesa. Carica i file documentali (PDF, delibere) per strutturare la città digitale.
           </p>
           
           <!-- 数据指标卡片 -->
           <div class="metrics-row">
             <div class="metric-card">
-              <div class="metric-value">低成本</div>
-              <div class="metric-label">常规模拟平均5$/次</div>
+              <div class="metric-value">Sicuro</div>
+              <div class="metric-label">On-Premise Garantito</div>
             </div>
             <div class="metric-card">
-              <div class="metric-value">高可用</div>
-              <div class="metric-label">最多百万级Agent模拟</div>
+              <div class="metric-value">Scalabile</div>
+              <div class="metric-label">Popolazione Simulabile Aperta</div>
             </div>
           </div>
 
           <!-- 项目模拟步骤介绍 (新增区域) -->
           <div class="steps-container">
             <div class="steps-header">
-               <span class="diamond-icon">◇</span> 工作流序列
+               <span class="diamond-icon">◇</span> Sequenza Operativa
             </div>
             <div class="workflow-list">
               <div class="workflow-item">
@@ -124,8 +124,8 @@
             <!-- 上传区域 -->
             <div class="console-section">
               <div class="console-header">
-                <span class="console-label">01 / 现实种子</span>
-                <span class="console-meta">支持格式: PDF, MD, TXT</span>
+                <span class="console-label">01 / Base Documentale</span>
+                <span class="console-meta">Compatibile con: PDF, MD, TXT</span>
               </div>
               
               <div 
@@ -148,8 +148,8 @@
                 
                 <div v-if="files.length === 0" class="upload-placeholder">
                   <div class="upload-icon">↑</div>
-                  <div class="upload-title">拖拽文件上传</div>
-                  <div class="upload-hint">或点击浏览文件系统</div>
+                  <div class="upload-title">Trascina i Documenti</div>
+                  <div class="upload-hint">Oppure clicca per sfogliare</div>
                 </div>
                 
                 <div v-else class="file-list">
@@ -164,23 +164,23 @@
 
             <!-- 分割线 -->
             <div class="console-divider">
-              <span>输入参数</span>
+              <span>Parametri di Simulazione</span>
             </div>
 
             <!-- 输入区域 -->
             <div class="console-section">
               <div class="console-header">
-                <span class="console-label">>_ 02 / 模拟提示词</span>
+                <span class="console-label">>_ 02 / Nuova Disposizione (Prompt)</span>
               </div>
               <div class="input-wrapper">
                 <textarea
                   v-model="formData.simulationRequirement"
                   class="code-input"
-                  placeholder="// 用自然语言输入模拟或预测需求（例.武大若发布撤销肖某处分的公告，会引发什么舆情走向）"
+                  placeholder="// Descrivi le istruzioni: (es. Proponi la creazione di una nuova Zona Traffico Limitato nel centro città, come reagiscono i commercianti e i residenti?)"
                   rows="6"
                   :disabled="loading"
                 ></textarea>
-                <div class="model-badge">引擎: MiroFish-V1.0</div>
+                <div class="model-badge">Engine: CivesAI-PA</div>
               </div>
             </div>
 
@@ -191,8 +191,8 @@
                 @click="startSimulation"
                 :disabled="!canSubmit || loading"
               >
-                <span v-if="!loading">启动引擎</span>
-                <span v-else>初始化中...</span>
+                <span v-if="!loading">Avvia Previsione</span>
+                <span v-else>Inizializzazione...</span>
                 <span class="btn-arrow">→</span>
               </button>
             </div>
