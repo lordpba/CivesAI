@@ -507,7 +507,7 @@ def prepare_simulation():
                     task_id,
                     status=TaskStatus.PROCESSING,
                     progress=0,
-                    message="开始准备模拟环境..."
+                    message="Inizio preparazione sandbox..."
                 )
                 
                 # 准备模拟（带进度回调）
@@ -528,10 +528,10 @@ def prepare_simulation():
                     
                     # 构建详细进度信息
                     stage_names = {
-                        "reading": "读取图谱实体",
-                        "generating_profiles": "生成Agent人设",
-                        "generating_config": "生成模拟配置",
-                        "copying_scripts": "准备模拟脚本"
+                        "reading": "Lettura Entità Mappa",
+                        "generating_profiles": "Generazione Profili Cittadini/PA",
+                        "generating_config": "Generazione Algoritmi Simulazione",
+                        "copying_scripts": "Inizializzazione Motore Eventi"
                     }
                     
                     stage_index = list(stage_weights.keys()).index(stage) + 1 if stage in stage_weights else 1

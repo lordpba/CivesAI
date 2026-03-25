@@ -209,7 +209,7 @@
       <!-- 等待/空状态 -->
       <div v-else class="graph-state">
         <div class="empty-icon">❖</div>
-        <p class="empty-text">等待本体生成...</p>
+        <p class="empty-text">In attesa della generazione del grafo...</p>
       </div>
     </div>
 

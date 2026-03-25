@@ -111,7 +111,7 @@ B. **具体类型（8个，根据文本内容设计）**：
 - **注意**：属性名不能使用 `name`、`uuid`、`group_id`、`created_at`、`summary`（这些是系统保留字）
 - 推荐使用：`full_name`, `title`, `role`, `position`, `location`, `description` 等
 
-## 实体类型参考 (Contesto: Comune italiano, es. Siena)
+## 实体类型参考 (Contesto: Comune italiano, es. Paperopoli)
 
 **个人类（具体）**：
 - StudenteFuoriSede: Studenti universitari fuori sede
@@ -126,7 +126,7 @@ B. **具体类型（8个，根据文本内容设计）**：
 - Person: 任何自然人（不属于上述具体类型时使用）
 
 **组织类（具体）**：
-- Comune: Ente locale, Comune (es. Comune di Siena)
+- Comune: Ente locale, Comune (es. Comune di Paperopoli)
 - PoliziaLocale: Vigili urbani
 - PartitoPolitico: Sezione locale di un partito
 - MediaLocale: Testata giornalistica della città

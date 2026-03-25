@@ -6,18 +6,18 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">01</span>
-            <span class="step-title">模拟实例初始化</span>
+            <span class="step-title">Inizializzazione Istanza</span>
           </div>
           <div class="step-status">
-            <span v-if="phase > 0" class="badge success">已完成</span>
-            <span v-else class="badge processing">初始化</span>
+            <span v-if="phase > 0" class="badge success">Completato</span>
+            <span v-else class="badge processing">Inizializzazione</span>
           </div>
         </div>
         
         <div class="card-content">
           <p class="api-note">POST /api/simulation/create</p>
           <p class="description">
-            新建simulation实例，拉取模拟世界参数模版
+            Creazione dell'istanza di simulazione e recupero dei template dei parametri mondiali.
           </p>
 
           <div v-if="simulationId" class="info-card">
@@ -46,19 +46,19 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">02</span>
-            <span class="step-title">生成 Agent 人设</span>
+            <span class="step-title">Generazione Profili Agent (Cittadini & PA)</span>
           </div>
           <div class="step-status">
-            <span v-if="phase > 1" class="badge success">已完成</span>
+            <span v-if="phase > 1" class="badge success">Completato</span>
             <span v-else-if="phase === 1" class="badge processing">{{ prepareProgress }}%</span>
-            <span v-else class="badge pending">等待</span>
+            <span v-else class="badge pending">In Attesa</span>
           </div>
         </div>
 
         <div class="card-content">
           <p class="api-note">POST /api/simulation/prepare</p>
           <p class="description">
-            结合上下文，自动调用工具从知识图谱梳理实体与关系，初始化模拟个体，并基于现实种子赋予他们独特的行为与记忆
+            Combinando il contesto del Grafo, l'Intelligenza Artificiale identifica le entità per popolare la simulazione con comportamenti ed esperienze reali specifiche del territorio.
           </p>
 
           <!-- Profiles Stats -->
@@ -118,19 +118,19 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">03</span>
-            <span class="step-title">生成双平台模拟配置</span>
+            <span class="step-title">Configurazione Algoritmi e Flusso Temporale</span>
           </div>
           <div class="step-status">
-            <span v-if="phase > 2" class="badge success">已完成</span>
-            <span v-else-if="phase === 2" class="badge processing">生成中</span>
-            <span v-else class="badge pending">等待</span>
+            <span v-if="phase > 2" class="badge success">Completato</span>
+            <span v-else-if="phase === 2" class="badge processing">In Corso</span>
+            <span v-else class="badge pending">In Attesa</span>
           </div>
         </div>
 
         <div class="card-content">
           <p class="api-note">POST /api/simulation/prepare</p>
           <p class="description">
-            LLM 根据模拟需求与现实种子，智能设置世界时间流速、推荐算法、每个个体的活跃时间段、发言频率、事件触发等参数
+            L'LLM stabilisce la velocità temporale, l'algoritmo di raccomandazione, la frequenza di attività per ogni individuo e l'innesco degli eventi in base ai documenti di delibera della PA.
           </p>
           
           <!-- Config Preview -->
@@ -351,19 +351,19 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">04</span>
-            <span class="step-title">初始激活编排</span>
+            <span class="step-title">Eventi Innesco e Dinamiche</span>
           </div>
           <div class="step-status">
-            <span v-if="phase > 3" class="badge success">已完成</span>
-            <span v-else-if="phase === 3" class="badge processing">编排中</span>
-            <span v-else class="badge pending">等待</span>
+            <span v-if="phase > 3" class="badge success">Completato</span>
+            <span v-else-if="phase === 3" class="badge processing">In Corso</span>
+            <span v-else class="badge pending">In Attesa</span>
           </div>
         </div>
 
         <div class="card-content">
           <p class="api-note">POST /api/simulation/prepare</p>
           <p class="description">
-            基于叙事方向，自动生成初始激活事件与热点话题，引导模拟世界的初始状态
+            Basandosi sulla direzione della sceneggiatura amministrativa, verranno innescati thread di discussione e argomenti caldi iniziali tra gli agenti PA e Cittadini.
           </p>
 
           <div v-if="simulationConfig?.event_config" class="orchestration-content">
@@ -423,17 +423,17 @@
         <div class="card-header">
           <div class="step-info">
             <span class="step-num">05</span>
-            <span class="step-title">准备完成</span>
+            <span class="step-title">Setup Completato</span>
           </div>
           <div class="step-status">
-            <span v-if="phase >= 4" class="badge processing">进行中</span>
-            <span v-else class="badge pending">等待</span>
+            <span v-if="phase >= 4" class="badge processing">Operativo</span>
+            <span v-else class="badge pending">In Attesa</span>
           </div>
         </div>
 
         <div class="card-content">
           <p class="api-note">POST /api/simulation/start</p>
-          <p class="description">模拟环境已准备完成，可以开始运行模拟</p>
+          <p class="description">La Digital Twin sandbox è pronta.</p>
           
           <!-- 模拟轮数配置 - 只有在配置生成完成且轮数计算出来后才显示 -->
           <div v-if="simulationConfig && autoGeneratedRounds" class="rounds-config-section">
@@ -521,7 +521,7 @@
               :disabled="phase < 4"
               @click="handleStartSimulation"
             >
-              开始双世界并行模拟 ➝
+              Avvia Previsione Impatto ➝
             </button>
           </div>
         </div>

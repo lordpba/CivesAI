@@ -306,7 +306,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_profiles", 0, 
-                    "开始生成...",
+                    "Inizio generazione...",
                     current=0,
                     total=total_entities
                 )
@@ -394,7 +394,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_config", 30, 
-                    "正在调用LLM生成配置...",
+                    "Chiamata LLM per configurazione...",
                     current=1,
                     total=3
                 )
@@ -429,7 +429,7 @@ class SimulationManager:
             if progress_callback:
                 progress_callback(
                     "generating_config", 100, 
-                    "配置生成完成",
+                    "Configurazione completata",
                     current=3,
                     total=3
                 )

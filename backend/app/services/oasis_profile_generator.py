@@ -670,7 +670,7 @@ class OasisProfileGenerator:
     
     def _get_system_prompt(self, is_individual: bool) -> str:
         """获取系统提示词"""
-        base_prompt = "你是社交媒体用户画像生成专家。生成详细、真实的人设用于舆论模拟,最大程度还原已有现实情况。必须返回有效的JSON格式，所有字符串值不能包含未转义的换行符。请使用意大利语 (Italiano) 生成内容，并融入意大利真实的社会背景：例如 un cittadino o ente nel Comune (es. Siena), la cui vita è regolamentata dal sindaco e dalla giunta, che paga tasse come la TARI, ed è influenzato dall'opinione pubblica locale."
+        base_prompt = "你是社交媒体用户画像生成专家。生成详细、真实的人设用于舆论模拟,最大程度还原已有现实情况。必须返回有效的JSON格式，所有字符串值不能包含未转义的换行符。请使用意大利语 (Italiano) 生成内容，并融入意大利真实的社会背景：例如 un cittadino o ente nel Comune (es. Paperopoli), la cui vita è regolamentata dal sindaco e dalla giunta, che paga tasse come la TARI, ed è influenzato dall'opinione pubblica locale."
         return base_prompt
     
     def _build_individual_persona_prompt(
@@ -686,7 +686,7 @@ class OasisProfileGenerator:
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "无"
         context_str = context[:3000] if context else "无额外上下文"
         
-        return f"""为实体生成详细的本地社群用户人设（Contesto: Comune Italiano, es. Siena）,最大程度还原已有现实情况。
+        return f"""为实体生成详细的本地社群用户人设（Contesto: Comune Italiano, es. Paperopoli）,最大程度还原已有现实情况。
 
 实体名称: {entity_name}
 实体类型: {entity_type}
@@ -735,7 +735,7 @@ class OasisProfileGenerator:
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "无"
         context_str = context[:3000] if context else "无额外上下文"
         
-        return f"""为机构/群体实体生成详细的官方账号设定（Contesto: Pubblica Amministrazione / Comune Italiano, es. Siena）,最大程度还原已有现实情况。
+        return f"""为机构/群体实体生成详细的官方账号设定（Contesto: Pubblica Amministrazione / Comune Italiano, es. Paperopoli）,最大程度还原已有现实情况。
 
 实体名称: {entity_name}
 实体类型: {entity_type}
@@ -945,9 +945,9 @@ class OasisProfileGenerator:
                 )
                 return idx, fallback_profile, str(e)
         
-        logger.info(f"开始并行生成 {total} 个Agent人设（并行数: {parallel_count}）...")
+        logger.info(f"Inizio generazione parallela {total} profili agenti ({parallel_count} thread)...")
         print(f"\n{'='*60}")
-        print(f"开始生成Agent人设 - 共 {total} 个实体，并行数: {parallel_count}")
+        print(f"Inizio generazione profili - Entità totali: {total}, Thread: {parallel_count}")
         print(f"{'='*60}\n")
         
         # 使用线程池并行执行
