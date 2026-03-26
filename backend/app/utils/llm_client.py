@@ -1,6 +1,6 @@
 """
-LLM客户端封装
-统一使用OpenAI格式调用
+LLMincapsulamento del client
+Uso unificato delle chiamate in formato OpenAI
 """
 
 import json
@@ -11,8 +11,12 @@ from openai import OpenAI
 from ..config import Config
 
 
+from ..utils.logger import get_logger
+
+logger = get_logger('mirofish.llm')
+
 class LLMClient:
-    """LLM客户端"""
+    """LLMcliente"""
     
     def __init__(
         self,
@@ -25,7 +29,7 @@ class LLMClient:
         self.model = model or Config.LLM_MODEL_NAME
         
         if not self.api_key:
-            raise ValueError("LLM_API_KEY 未配置")
+            raise ValueError("LLM_API_KEY Non configurato")
         
         self.client = OpenAI(
             api_key=self.api_key,
@@ -40,16 +44,16 @@ class LLMClient:
         response_format: Optional[Dict] = None
     ) -> str:
         """
-        发送聊天请求
+        Invia richiesta di chat
         
         Args:
-            messages: 消息列表
-            temperature: 温度参数
-            max_tokens: 最大token数
-            response_format: 响应格式（如JSON模式）
+            messages: Elenco dei messaggi
+            temperature: Parametri di temperatura
+            max_tokens: Numero massimo di token
+            response_format: Formato di risposta (come lo schema JSON）
             
         Returns:
-            模型响应文本
+            Testo della risposta del modello
         """
         kwargs = {
             "model": self.model,
@@ -62,9 +66,14 @@ class LLMClient:
             kwargs["response_format"] = response_format
         
         response = self.client.chat.completions.create(**kwargs)
-        content = response.choices[0].message.content
-        # 部分模型（如MiniMax M2.5）会在content中包含<think>思考内容，需要移除
+        if not response.choices:
+            logger.error(f"LLM Response choices empty: {response}")
+            return ""
+        
+        content = response.choices[0].message.content or ""
+        # Alcuni modelli (esMiniMax M2.5）saranno inclusi nei contenuti<think>Il contenuto pensante deve essere rimosso
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
+        logger.info(f"Modello {self.model} Risposta: {content[:200]}..." if len(content) > 200 else content)
         return content
     
     def chat_json(
@@ -74,15 +83,15 @@ class LLMClient:
         max_tokens: int = 4096
     ) -> Dict[str, Any]:
         """
-        发送聊天请求并返回JSON
+        Invia richiesta di chat e ritornaJSON
         
         Args:
-            messages: 消息列表
-            temperature: 温度参数
-            max_tokens: 最大token数
+            messages: Elenco dei messaggi
+            temperature: Parametri di temperatura
+            max_tokens: Numero massimo di token
             
         Returns:
-            解析后的JSON对象
+            Oggetto JSON analizzato
         """
         response = self.chat(
             messages=messages,
@@ -90,14 +99,19 @@ class LLMClient:
             max_tokens=max_tokens,
             response_format={"type": "json_object"}
         )
-        # 清理markdown代码块标记
-        cleaned_response = response.strip()
-        cleaned_response = re.sub(r'^```(?:json)?\s*\n?', '', cleaned_response, flags=re.IGNORECASE)
-        cleaned_response = re.sub(r'\n?```\s*$', '', cleaned_response)
-        cleaned_response = cleaned_response.strip()
+        # Prova a estrarre il blocco JSON principale (cerca dalla prima parentesi graffa all'ultima)
+        json_match = re.search(r'(\{[\s\S]*\})', response, re.DOTALL)
+        if json_match:
+            cleaned_response = json_match.group(1).strip()
+        else:
+            # Fallback alla rimozione dei tag markdown se non troviamo graffe
+            cleaned_response = re.sub(r'^```(?:json)?\s*\n?', '', response.strip(), flags=re.IGNORECASE)
+            cleaned_response = re.sub(r'\n?```\s*$', '', cleaned_response)
+            cleaned_response = cleaned_response.strip()
 
         try:
             return json.loads(cleaned_response)
         except json.JSONDecodeError:
-            raise ValueError(f"LLM返回的JSON格式无效: {cleaned_response}")
+            logger.error(f"JSON non valido restituito da LLM: {cleaned_response}")
+            raise ValueError(f"LLM Il formato JSON restituito non è valido: {cleaned_response[:100]}...")
 

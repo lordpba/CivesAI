@@ -208,10 +208,10 @@ const selectedOntologyItem = ref(null)
 const logContent = ref(null)
 const creatingSimulation = ref(false)
 
-// 进入环境搭建 - 创建 simulation 并跳转
+// Entra nella costruzione dell'ambiente: crea simulazione e salta
 const handleEnterEnvSetup = async () => {
   if (!props.projectData?.project_id || !props.projectData?.graph_id) {
-    console.error('缺少项目或图谱信息')
+    console.error('Informazioni mancanti sul progetto o sulla mappa')
     return
   }
   
@@ -226,18 +226,18 @@ const handleEnterEnvSetup = async () => {
     })
     
     if (res.success && res.data?.simulation_id) {
-      // 跳转到 simulation 页面
+      // Vai alla pagina della simulazione
       router.push({
         name: 'Simulation',
         params: { simulationId: res.data.simulation_id }
       })
     } else {
-      console.error('创建模拟失败:', res.error)
-      alert('创建模拟失败: ' + (res.error || '未知错误'))
+      console.error('Impossibile creare la simulazione:', res.error)
+      alert('Impossibile creare la simulazione: ' + (res.error || 'errore sconosciuto'))
     }
   } catch (err) {
-    console.error('创建模拟异常:', err)
-    alert('创建模拟异常: ' + err.message)
+    console.error("Crea un'eccezione fittizia:", err)
+    alert("Crea un'eccezione fittizia: " + err.message)
   } finally {
     creatingSimulation.value = false
   }

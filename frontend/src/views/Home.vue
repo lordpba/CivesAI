@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-    <!-- 顶部导航栏 -->
+    <!-- barra di navigazione superiore -->
     <nav class="navbar">
       <div class="nav-brand">CIVESAI</div>
       <div class="nav-links">
@@ -11,7 +11,7 @@
     </nav>
 
     <div class="main-content">
-      <!-- 上半部分：Hero 区域 -->
+      <!-- Parte superiore: zona Eroe -->
       <section class="hero-section">
         <div class="hero-left">
           <div class="tag-row">
@@ -37,7 +37,7 @@
         </div>
         
         <div class="hero-right">
-          <!-- Logo 区域 -->
+          <!-- Logo zona -->
           <div class="logo-container">
             <img src="../assets/logo/civesai_logo.png" alt="CivesAI Logo" class="hero-logo" />
           </div>
@@ -48,12 +48,12 @@
         </div>
       </section>
 
-      <!-- 下半部分：双栏布局 -->
+      <!-- Metà inferiore: layout a due colonne -->
       <section class="dashboard-section">
-        <!-- 左栏：状态与步骤 -->
+        <!-- Colonna di sinistra: stato e passaggi -->
         <div class="left-panel">
           <div class="panel-header">
-            <span class="status-dot">■</span> 系统状态
+            <span class="status-dot">■</span> Stato del sistema
           </div>
           
           <h2 class="section-title">Sistema Operativo</h2>
@@ -61,7 +61,7 @@
             Motore diagnostico in attesa. Carica i file documentali (PDF, delibere) per strutturare la città digitale.
           </p>
           
-          <!-- 数据指标卡片 -->
+          <!-- Scheda indicatore dati -->
           <div class="metrics-row">
             <div class="metric-card">
               <div class="metric-value">Sicuro</div>
@@ -73,7 +73,7 @@
             </div>
           </div>
 
-          <!-- 项目模拟步骤介绍 (新增区域) -->
+          <!-- Introduzione alle fasi di simulazione del progetto (Aggiungi nuova area) -->
           <div class="steps-container">
             <div class="steps-header">
                <span class="diamond-icon">◇</span> Sequenza Operativa
@@ -118,10 +118,10 @@
           </div>
         </div>
 
-        <!-- 右栏：交互控制台 -->
+        <!-- Colonna di destra: console interattiva -->
         <div class="right-panel">
           <div class="console-box">
-            <!-- 上传区域 -->
+            <!-- Area di caricamento -->
             <div class="console-section">
               <div class="console-header">
                 <span class="console-label">01 / Base Documentale</span>
@@ -162,12 +162,12 @@
               </div>
             </div>
 
-            <!-- 分割线 -->
+            <!-- linea di demarcazione -->
             <div class="console-divider">
               <span>Parametri di Simulazione</span>
             </div>
 
-            <!-- 输入区域 -->
+            <!-- zona di ingresso -->
             <div class="console-section">
               <div class="console-header">
                 <span class="console-label">>_ 02 / Nuova Disposizione (Prompt)</span>
@@ -184,7 +184,7 @@
               </div>
             </div>
 
-            <!-- 启动按钮 -->
+            <!-- pulsante di avvio -->
             <div class="console-section btn-section">
               <button 
                 class="start-engine-btn"
@@ -200,7 +200,7 @@
         </div>
       </section>
 
-      <!-- 历史项目数据库 -->
+      <!-- Database storico del progetto -->
       <HistoryDatabase />
     </div>
   </div>
@@ -213,41 +213,41 @@ import HistoryDatabase from '../components/HistoryDatabase.vue'
 
 const router = useRouter()
 
-// 表单数据
+// dati del modulo
 const formData = ref({
   simulationRequirement: ''
 })
 
-// 文件列表
+// elenco dei file
 const files = ref([])
 
-// 状态
+// Stato
 const loading = ref(false)
 const error = ref('')
 const isDragOver = ref(false)
 
-// 文件输入引用
+// Riferimento all'input del file
 const fileInput = ref(null)
 
-// 计算属性:是否可以提交
+// Proprietà calcolate:È possibile inviare
 const canSubmit = computed(() => {
   return formData.value.simulationRequirement.trim() !== '' && files.value.length > 0
 })
 
-// 触发文件选择
+// Attiva la selezione del file
 const triggerFileInput = () => {
   if (!loading.value) {
     fileInput.value?.click()
   }
 }
 
-// 处理文件选择
+// Gestire la selezione dei file
 const handleFileSelect = (event) => {
   const selectedFiles = Array.from(event.target.files)
   addFiles(selectedFiles)
 }
 
-// 处理拖拽相关
+// Gestione del trascinamento della selezione
 const handleDragOver = (e) => {
   if (!loading.value) {
     isDragOver.value = true
@@ -266,7 +266,7 @@ const handleDrop = (e) => {
   addFiles(droppedFiles)
 }
 
-// 添加文件
+// Aggiungi file
 const addFiles = (newFiles) => {
   const validFiles = newFiles.filter(file => {
     const ext = file.name.split('.').pop().toLowerCase()
@@ -275,12 +275,12 @@ const addFiles = (newFiles) => {
   files.value.push(...validFiles)
 }
 
-// 移除文件
+// Rimuovi file
 const removeFile = (index) => {
   files.value.splice(index, 1)
 }
 
-// 滚动到底部
+// scorrere fino in fondo
 const scrollToBottom = () => {
   window.scrollTo({
     top: document.body.scrollHeight,
@@ -288,15 +288,15 @@ const scrollToBottom = () => {
   })
 }
 
-// 开始模拟 - 立即跳转，API调用在Process页面进行
+// Avvia la simulazione: salta immediatamente, le chiamate API vengono effettuate nella pagina Processo
 const startSimulation = () => {
   if (!canSubmit.value || loading.value) return
   
-  // 存储待上传的数据
+  // Memorizza i dati da caricare
   import('../store/pendingUpload.js').then(({ setPendingUpload }) => {
     setPendingUpload(files.value, formData.value.simulationRequirement)
     
-    // 立即跳转到Process页面（使用特殊标识表示新建项目）
+    // Vai immediatamente alla pagina Processo (usa un identificatore speciale per indicare un nuovo progetto）
     router.push({
       name: 'Process',
       params: { projectId: 'new' }
@@ -306,7 +306,7 @@ const startSimulation = () => {
 </script>
 
 <style scoped>
-/* 全局变量与重置 */
+/* Variabili globali e reset */
 :root {
   --black: #000000;
   --white: #FFFFFF;
@@ -315,8 +315,8 @@ const startSimulation = () => {
   --gray-text: #666666;
   --border: #E5E5E5;
   /* 
-    使用 Space Grotesk 作为主要标题字体，JetBrains Mono 作为代码/标签字体
-    确保已在 index.html 引入这些 Google Fonts 
+    Utilizza Space Grotesk come carattere dell'intestazione principale e JetBrains Mono come carattere del codice/etichetta
+    Assicurati di esserlo index.html presentateli Google Fonts 
   */
   --font-mono: 'JetBrains Mono', monospace;
   --font-sans: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
@@ -330,7 +330,7 @@ const startSimulation = () => {
   color: var(--black);
 }
 
-/* 顶部导航 */
+/* navigazione in alto */
 .navbar {
   height: 60px;
   background: var(--black);
@@ -373,14 +373,14 @@ const startSimulation = () => {
   font-family: sans-serif;
 }
 
-/* 主要内容区 */
+/* Area del contenuto principale */
 .main-content {
   max-width: 1400px;
   margin: 0 auto;
   padding: 60px 40px;
 }
 
-/* Hero 区域 */
+/* Hero zona */
 .hero-section {
   display: flex;
   justify-content: space-between;
@@ -511,7 +511,7 @@ const startSimulation = () => {
 }
 
 .hero-logo {
-  max-width: 500px; /* 调整logo大小 */
+  max-width: 500px; /* Regola la dimensione del logo */
   width: 100%;
 }
 
@@ -533,7 +533,7 @@ const startSimulation = () => {
   border-color: var(--orange);
 }
 
-/* Dashboard 双栏布局 */
+/* Dashboard Disposizione a due colonne */
 .dashboard-section {
   display: flex;
   gap: 60px;
@@ -548,7 +548,7 @@ const startSimulation = () => {
   flex-direction: column;
 }
 
-/* 左侧面板 */
+/* pannello di sinistra */
 .left-panel {
   flex: 0.8;
 }
@@ -604,7 +604,7 @@ const startSimulation = () => {
   color: #999;
 }
 
-/* 项目模拟步骤介绍 */
+/* Introduzione alle fasi di simulazione del progetto */
 .steps-container {
   border: 1px solid var(--border);
   padding: 30px;
@@ -660,14 +660,14 @@ const startSimulation = () => {
   color: var(--gray-text);
 }
 
-/* 右侧交互控制台 */
+/* Console interattiva destra */
 .right-panel {
   flex: 1.2;
 }
 
 .console-box {
-  border: 1px solid #CCC; /* 外部实线 */
-  padding: 8px; /* 内边距形成双重边框感 */
+  border: 1px solid #CCC; /* linea continua esterna */
+  padding: 8px; /* L'imbottitura crea una sensazione di doppio bordo */
 }
 
 .console-section {
@@ -835,7 +835,7 @@ const startSimulation = () => {
   overflow: hidden;
 }
 
-/* 可点击状态（非禁用） */
+/* Stato cliccabile (non disabilitato)） */
 .start-engine-btn:not(:disabled) {
   background: var(--black);
   border: 1px solid var(--black);
@@ -860,14 +860,14 @@ const startSimulation = () => {
   border: 1px solid #E5E5E5;
 }
 
-/* 引导动画：微妙的边框脉冲 */
+/* Animazione di avvio: sottile impulso di confine */
 @keyframes pulse-border {
   0% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2); }
   70% { box-shadow: 0 0 0 6px rgba(0, 0, 0, 0); }
   100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
 }
 
-/* 响应式适配 */
+/* Adattamento reattivo */
 @media (max-width: 1024px) {
   .dashboard-section {
     flex-direction: column;
