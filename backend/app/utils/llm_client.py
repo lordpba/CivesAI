@@ -62,6 +62,14 @@ class LLMClient:
             "max_tokens": max_tokens,
         }
         
+        # Se usiamo Ollama locale, forziamo il context window per evitare risposte vuote
+        if "11434" in str(Config.LLM_BASE_URL):
+            kwargs["extra_body"] = {
+                "options": {
+                    "num_ctx": 8192
+                }
+            }
+        
         if response_format:
             kwargs["response_format"] = response_format
         
@@ -71,6 +79,7 @@ class LLMClient:
             return ""
         
         content = response.choices[0].message.content or ""
+        logger.info(f"LLM RAW Response (length {len(content)}): {content[:500]}...")
         # Alcuni modelli (esMiniMax M2.5）saranno inclusi nei contenuti<think>Il contenuto pensante deve essere rimosso
         content = re.sub(r'<think>[\s\S]*?</think>', '', content).strip()
         logger.info(f"Modello {self.model} Risposta: {content[:200]}..." if len(content) > 200 else content)
@@ -96,8 +105,7 @@ class LLMClient:
         response = self.chat(
             messages=messages,
             temperature=temperature,
-            max_tokens=max_tokens,
-            response_format={"type": "json_object"}
+            max_tokens=max_tokens
         )
         # Prova a estrarre il blocco JSON principale (cerca dalla prima parentesi graffa all'ultima)
         json_match = re.search(r'(\{[\s\S]*\})', response, re.DOTALL)
