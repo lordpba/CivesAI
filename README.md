@@ -91,7 +91,7 @@ Questi agenti interagiscono tra loro nel tempo, producendo discussioni, alleanze
    Rinomina il file `.env.example` in `.env` e inserisci le tue chiavi API e gli endpoint locali.
    ```bash
    LLM_BASE_URL=http://localhost:11434/v1 # Esempio per Ollama
-   LLM_MODEL_NAME=llama3 # O altro modello installato
+   LLM_MODEL_NAME=Gemma3:27b # O altro modello installato
    ZEP_API_KEY=tua_chiave_zep
    ```
 
