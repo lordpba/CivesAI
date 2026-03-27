@@ -21,6 +21,8 @@
 
 **CivesAI** is a predictive multi-agent simulation engine designed specifically for local public administration entities. By extracting seed information from the real world — such as demographic data, policy drafts, budgets, and local news — CivesAI constructs a **high-fidelity parallel digital world**.
 
+The system uses **Ollama** with local LLM models, so sensitive data can remain fully on-premise.
+
 In this ecosystem, thousands of agents with independent personalities, long-term memory, and unique behavioral logic interact and evolve autonomously. **Administrators and policy-makers** can operate within this digital "sandbox," injecting new variables (e.g., changes to traffic zones, tax restructuring, new construction sites) to:
 
 - **Accurately Predict Reactions** of public opinion.
@@ -43,6 +45,7 @@ In this ecosystem, thousands of agents with independent personalities, long-term
 - **Python**: 3.11 or 3.12 (using `uv` for package management is recommended)
 - **Ollama**: For local model execution (optional if using Cloud APIs)
 - **Zep**: For agent memory management (Cloud or Local)
+- **Recommended hardware (real workloads)**: **NVIDIA DGX** or **AMD AI MAX PRO+ 395**
 
 ### Installation
 

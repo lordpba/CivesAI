@@ -21,6 +21,8 @@
 
 **CivesAI** è un motore di simulazione multi-agente e predittivo ideato specificamente per le realtà degli enti pubblici locali italiani (comuni, province, città). Estraendo informazioni dal mondo reale — come dati demografici, delibere, bilanci e articoli di cronaca — CivesAI costruisce un **mondo digitale parallelo** ad alta fedeltà.
 
+Il sistema utilizza **Ollama** e modelli LLM locali, cosi da mantenere i dati sensibili in infrastruttura on-premise.
+
 Paper ufficiale: [MiroFish_paper.pdf](./MiroFish_paper.pdf)
 
 In questo ecosistema, migliaia di agenti dotati di personalità indipendente, memoria a lungo termine e logiche comportamentali interagiscono e si evolvono autonomamente. **Amministratori e decisori politici** possono agire in questo "sandbox" digitale, inserendo nuove variabili (es. modifiche alla ZTL, rimodulazione delle tasse locali, nuovi cantieri) per:
@@ -81,6 +83,7 @@ Questi agenti interagiscono tra loro nel tempo, producendo discussioni, alleanze
 - **Python**: 3.11 o 3.12 (consigliato l'uso di `uv` per la gestione pacchetti)
 - **Ollama**: Per l'esecuzione locale dei modelli (optional se si usano API Cloud)
 - **Zep**: Per la gestione della memoria degli agenti (cloud o locale)
+- **Hardware consigliato (carichi reali)**: **NVIDIA DGX** oppure **AMD AI MAX PRO+ 395**
 
 ### Installazione
 
