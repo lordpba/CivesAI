@@ -1,45 +1,87 @@
 <div align="center">
 
-<img src="./static/image/civesai_logo.png" alt="CivesAI Logo" width="75%"/>
+<img src="./static/image/civesai_logo.png" alt="CivesAI Logo" width="65%"/>
 
-*CivesAI: Il Gemello Digitale e Predittivo per la Pubblica Amministrazione*
+### **CivesAI: Il Gemello Digitale e Predittivo per la Pubblica Amministrazione**
+
+*Simulazione multi-agente ad alta fedeltà per l'ottimizzazione delle politiche pubbliche e l'ascolto dei cittadini.*
+
+[![License](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://opensource.org/licenses/AGPL-3.0)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-green.svg)](https://www.python.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-brightgreen.svg)](https://nodejs.org/)
+[![Ollama](https://img.shields.io/badge/LLM-Ollama%20Locale-orange.svg)](https://ollama.ai/)
+
+[Italiano](./README.md) | [English](./README-EN.md)
 
 </div>
 
+---
+
 ## ⚡ Panoramica del Progetto
 
-**CivesAI** è un motore di simulazione multi-agente e predittivo ideato specificamente per le realtà degli enti pubblici locali italiani (comuni, paesi, città). Estraendo informazioni dal mondo reale (dati demografici, delibere, bilanci, articoli di giornali locali), CivesAI costruisce un mondo digitale parallelo ad alta fedeltà. In questo spazio, migliaia di agenti dotati di personalità indipendente, memoria a lungo termine e logiche comportamentali interagiscono e si evolvono liberamente.
+**CivesAI** è un motore di simulazione multi-agente e predittivo ideato specificamente per le realtà degli enti pubblici locali italiani (comuni, province, città). Estraendo informazioni dal mondo reale — come dati demografici, delibere, bilanci e articoli di cronaca — CivesAI costruisce un **mondo digitale parallelo** ad alta fedeltà.
 
-**La Sindaca, il Sindaco o l'Amministratore Locale** può agire dall'alto, inserendo nuove variabili (es. modifiche alla ZTL, rimodulazione della TARI, nuovi cantieri) per prevedere in modo accurato le reazioni dell'opinione pubblica e ottimizzare le politiche pubbliche prima che vengano attuate nel mondo reale.
+In questo ecosistema, migliaia di agenti dotati di personalità indipendente, memoria a lungo termine e logiche comportamentali interagiscono e si evolvono autonomamente. **Amministratori e decisori politici** possono agire in questo "sandbox" digitale, inserendo nuove variabili (es. modifiche alla ZTL, rimodulazione delle tasse locali, nuovi cantieri) per:
 
-> Basterà: caricare i documenti di base (analisi anagrafiche, bozze di delibere) e descrivere la simulazione in linguaggio naturale.
-> CivesAI restituirà: un report previsionale dettagliato e un ambiente digitale interattivo con cui confrontarsi.
+- **Prevedere le reazioni** dell'opinione pubblica in modo accurato.
+- **Ottimizzare le politiche** prima della loro attuazione reale.
+- **Identificare criticità** sommerse o potenziali conflitti sociali.
 
-## 🚀 Setup dell'Ambiente Locale (Privacy e Autonomia)
+## ✨ Caratteristiche Principali
 
-CivesAI è stato pensato per trattare dati dei cittadini e scenari amministrativi. Per questo motivo, **è fondamentale mantenere la totale autonomia e privacy dei dati**. Non inviare mai dati a server cloud di terze parti se contengono informazioni sensibili o riservate della PA.
+- 🤖 **Motore Multi-Agente Avanzato**: Basato sull'engine OASIS, permette la simulazione di interazioni sociali complesse tra migliaia di agenti con tratti psicologici unici.
+- 🧠 **Memoria a Lungo Termine**: Integrazione con **Zep** per permettere agli agenti di ricordare interazioni passate, evolvendo la propria opinione nel tempo in base agli eventi della simulazione.
+- 📄 **Seeding da Documenti Reali**: Carica PDF, file di testo o markdown per addestrare il contesto della simulazione su dati amministrativi reali.
+- 🔒 **Privacy First (Local LLM)**: Supporto nativo per **Ollama**, consentendo l'esecuzione di modelli linguistici direttamente on-premise, garantendo che i dati sensibili della PA non lascino mai i server locali.
+- 📊 **Reportistica Automatica**: Generazione di report dettagliati sull'andamento della simulazione, impatto sociale e suggerimenti strategici tramite un Report Agent dedicato.
+- 💬 **Interazione Diretta**: Possibilità di "scendere in campo" e dialogare direttamente con gli agenti simulati per sondarne umori e motivazioni.
 
-Per l'esecuzione di CivesAI, raccomandiamo caldamente un **Setup dell'Ambiente Locale** utilizzando:
-- **Ollama Locale**: Per l'esecuzione dei modelli linguistici direttamente sui vostri server, garantendo l'assoluta on-premise execution (consigliati modelli leggeri ma efficaci).
-- **Infrastruttura Hardware Dedicata**: Invitiamo all'utilizzo di sistemi hardware LocalAI, come i server **DGX** o **AMD ProMaxAI+**, capaci di supportare carichi di lavoro multi-agente pesanti pur mantenendo tempi di risposta rapidi e scalabilità, tutelando la privacy civica.
+## 🚀 Avvio Rapido
 
-### Requisiti di Sistema (Locale)
-| Strumento | Versione | Descrizione |
-|------|---------|------|
-| **Node.js** | 18+ | Ambiente frontend |
-| **Python** | ≥3.11, ≤3.12 | Ambiente backend |
-| **Ollama** | Ultima | Motore LLM Locale |
+### Requisiti di Sistema
+- **Node.js**: v18.0.0 o superiore
+- **Python**: 3.11 o 3.12 (consigliato l'uso di `uv` per la gestione pacchetti)
+- **Ollama**: Per l'esecuzione locale dei modelli (optional se si usano API Cloud)
+- **Zep**: Per la gestione della memoria degli agenti (cloud o locale)
 
-### Avvio Rapido
-1. Installa Ollama e assicurati che il modello prescelto sia scaricato e in esecuzione.
-2. Rinomina `.env.example` in `.env` e configura i parametri per puntare al tuo indirizzo locale di Ollama (es: `http://localhost:11434/v1`).
-**Nota su Zep**: CivesAI utilizza Zep per gestire la memoria a lungo termine degli agenti. Assicurati di inserire anche la tua `ZEP_API_KEY` (puoi usare il piano gratuito su getzep.com o un'istanza locale se preferisci).
-3. Installa le dipendenze con `npm run setup:all`.
-4. Avvia CivesAI con `npm run dev` e accedi a `http://localhost:3000`.
+### Installazione
+
+1. **Configurazione Ambiente**:
+   Rinomina il file `.env.example` in `.env` e inserisci le tue chiavi API e gli endpoint locali.
+   ```bash
+   LLM_BASE_URL=http://localhost:11434/v1 # Esempio per Ollama
+   LLM_MODEL_NAME=llama3 # O altro modello installato
+   ZEP_API_KEY=tua_chiave_zep
+   ```
+
+2. **Setup Automatico**:
+   Installa tutte le dipendenze (frontend e backend) con un unico comando:
+   ```bash
+   npm run setup:all
+   ```
+
+3. **Esecuzione**:
+   Avvia i server di sviluppo per backend e frontend simultaneamente:
+   ```bash
+   npm run dev
+   ```
+   L'applicazione sarà accessibile all'indirizzo `http://localhost:3000`.
+
+## 🏗️ Architettura
+
+Il sistema è composto da tre pilastri fondamentali:
+- **Frontend (Vite + Vue.js)**: Una dashboard interattiva per visualizzare la simulazione e i report.
+- **Backend (Flask)**: Gestisce la logica di business, l'elaborazione dei documenti e l'orchestrazione degli agenti.
+- **Simulation Engine (Camel-AI/OASIS)**: Il cuore pulsante che governa le interazioni sociali e l'evoluzione degli agenti.
 
 ## 📄 Licenza e Crediti
 
-Questo progetto nasce come fork e adattamento di [MiroFish](https://github.com/666ghj/MiroFish) e sfrutta l'engine di base originariamente concepito dal team di CAMEL-AI (OASIS).
-Ringraziamo i creatori originali per aver rilasciato il codice sotto licenza open-source.
+Questo progetto è distribuito sotto licenza **AGPL-3.0**.
 
-CivesAI evolve l'architettura per creare modelli conformi al tessuto sociale, normativo e amministrativo italiano.
+**CivesAI** nasce come adattamento e evoluzione di [MiroFish](https://github.com/666ghj/MiroFish) e sfrutta l'engine di simulazione originariamente concepito dal team di **CAMEL-AI (OASIS)**. Ringraziamo profondamente la comunità open-source per queste basi tecnologiche straordinarie.
+
+---
+
+<div align="center">
+Creato con passione per rendere la Pubblica Amministrazione più smart, predittiva e vicina ai cittadini.
+</div>
