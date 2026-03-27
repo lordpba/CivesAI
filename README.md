@@ -21,6 +21,8 @@
 
 **CivesAI** è un motore di simulazione multi-agente e predittivo ideato specificamente per le realtà degli enti pubblici locali italiani (comuni, province, città). Estraendo informazioni dal mondo reale — come dati demografici, delibere, bilanci e articoli di cronaca — CivesAI costruisce un **mondo digitale parallelo** ad alta fedeltà.
 
+Paper ufficiale: [MiroFish_paper.pdf](./MiroFish_paper.pdf)
+
 In questo ecosistema, migliaia di agenti dotati di personalità indipendente, memoria a lungo termine e logiche comportamentali interagiscono e si evolvono autonomamente. **Amministratori e decisori politici** possono agire in questo "sandbox" digitale, inserendo nuove variabili (es. modifiche alla ZTL, rimodulazione delle tasse locali, nuovi cantieri) per:
 
 - **Prevedere le reazioni** dell'opinione pubblica in modo accurato.
@@ -35,6 +37,42 @@ In questo ecosistema, migliaia di agenti dotati di personalità indipendente, me
 - 🔒 **Privacy First (Local LLM)**: Supporto nativo per **Ollama**, consentendo l'esecuzione di modelli linguistici direttamente on-premise, garantendo che i dati sensibili della PA non lascino mai i server locali.
 - 📊 **Reportistica Automatica**: Generazione di report dettagliati sull'andamento della simulazione, impatto sociale e suggerimenti strategici tramite un Report Agent dedicato.
 - 💬 **Interazione Diretta**: Possibilità di "scendere in campo" e dialogare direttamente con gli agenti simulati per sondarne umori e motivazioni.
+
+## 🚧 Caso d'Uso Esempio: Estensione ZTL Comunale
+
+Un caso tipico per un comune e la valutazione preventiva di una nuova ordinanza di estensione della ZTL. Caricando documenti locali (delibere, articoli, report su mobilità, osservazioni dei cittadini), CivesAI costruisce una simulazione in cui emergono:
+
+- **Gli attori influenzati dall'ordinanza**: residenti, commercianti, pendolari, associazioni di categoria, operatori del trasporto, amministrazione.
+- **Le relazioni tra soggetti**: alleanze, conflitti, canali di influenza e dinamiche di risposta tra enti pubblici, gruppi economici e comunità locali.
+- **Le correlazioni rilevanti**: possibili effetti su traffico, consenso pubblico, impatto economico di quartiere, pressione mediatica e stabilità narrativa nel tempo.
+
+In questo modo il sistema puo essere usato per confrontare scenari alternativi prima della decisione finale, ad esempio:
+
+- Estensione immediata della ZTL versus introduzione graduale per zone.
+- Fasce orarie differenti (solo ore di punta, fascia serale, weekend).
+- Misure compensative (permessi temporanei, incentivi al TPL, finestre logistiche per i negozi).
+
+L'obiettivo e supportare la PA nelle scelte con una simulazione trasparente, ripetibile e orientata alla riduzione dei rischi sociali e operativi.
+
+<div align="center">
+   <img src="./examples/aumento%20ZTL.png" alt="Esempio di simulazione: estensione ZTL comunale con enti influenzati e relazioni" width="90%"/>
+</div>
+
+### 👥 Esempio Agenti Generati nello Scenario ZTL
+
+Nel medesimo scenario, il sistema genera automaticamente agenti coerenti con il contesto locale e con il ruolo sociale di ciascun soggetto. In pratica, vengono creati profili che rappresentano i gruppi maggiormente coinvolti dall'ordinanza, ad esempio:
+
+- **Partite IVA e commercianti del centro**: sensibilita elevata a accessibilita, costi di parcheggio e flussi pedonali.
+- **Residenti in area ZTL**: maggiore attenzione a vivibilita, rumore, sicurezza stradale e qualita dell'aria.
+- **Automobilisti pendolari**: focus su tempi di percorrenza, alternative di sosta e costo complessivo degli spostamenti.
+- **Pensionati e cittadini fragili**: attenzione a servizi di prossimita e impatto delle nuove regole sulla mobilita quotidiana.
+- **Media locali e attori istituzionali**: diffusione narrativa, chiarimenti normativi e gestione del consenso pubblico.
+
+Questi agenti interagiscono tra loro nel tempo, producendo discussioni, alleanze e conflitti che aiutano l'amministrazione a valutare scenari alternativi prima della decisione finale.
+
+<div align="center">
+   <img src="./examples/agents%20ztl.png" alt="Esempio di agenti generati per lo scenario di estensione ZTL" width="90%"/>
+</div>
 
 ## 🚀 Avvio Rapido
 

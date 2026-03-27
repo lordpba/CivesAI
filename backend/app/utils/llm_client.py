@@ -102,11 +102,29 @@ class LLMClient:
         Returns:
             Oggetto JSON analizzato
         """
-        response = self.chat(
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
+        # Prefer JSON mode when the provider supports it (same behavior as upstream).
+        try:
+            response = self.chat(
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                response_format={"type": "json_object"}
+            )
+        except Exception as e:
+            # Some OpenAI-compatible providers do not support response_format.
+            logger.warning(f"LLM JSON mode non supportata, uso fallback testuale: {str(e)[:120]}")
+            response = self.chat(
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+
+        if not response or not response.strip():
+            logger.error(
+                f"LLM risposta vuota in chat_json (model={self.model}, base_url={self.base_url})"
+            )
+            raise ValueError("LLM ha restituito una risposta vuota")
+
         # Prova a estrarre il blocco JSON principale (cerca dalla prima parentesi graffa all'ultima)
         json_match = re.search(r'(\{[\s\S]*\})', response, re.DOTALL)
         if json_match:

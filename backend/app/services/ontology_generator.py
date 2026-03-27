@@ -4,6 +4,7 @@ Interfaccia 1: analizza il contenuto del testo e genera definizioni di entità e
 """
 
 import json
+import time
 from typing import Dict, Any, List, Optional
 from ..utils.llm_client import LLMClient
 
@@ -162,6 +163,8 @@ class OntologyGenerator:
     
     def __init__(self, llm_client: Optional[LLMClient] = None):
         self.llm_client = llm_client or LLMClient()
+
+    MAX_LLM_ATTEMPTS = 3
     
     def generate(
         self,
@@ -192,12 +195,33 @@ class OntologyGenerator:
             {"role": "user", "content": user_message}
         ]
         
-        # chiamareLLM
-        result = self.llm_client.chat_json(
-            messages=messages,
-            temperature=0.3,
-            max_tokens=4096
-        )
+        # chiamareLLM con retry per errori transienti (risposta vuota/JSON non valido)
+        last_error: Optional[Exception] = None
+        result: Optional[Dict[str, Any]] = None
+        for attempt in range(self.MAX_LLM_ATTEMPTS):
+            temperature = max(0.1, 0.3 - (attempt * 0.1))
+            try:
+                result = self.llm_client.chat_json(
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=4096
+                )
+                break
+            except Exception as e:
+                last_error = e
+                if attempt < self.MAX_LLM_ATTEMPTS - 1:
+                    from ..utils.logger import get_logger
+                    logger = get_logger('mirofish.ontology')
+                    logger.warning(
+                        f"Generazione ontologia fallita (tentativo {attempt + 1}/{self.MAX_LLM_ATTEMPTS}): "
+                        f"{str(e)[:120]}. Riprovo..."
+                    )
+                    time.sleep(2 * (attempt + 1))
+                else:
+                    raise
+
+        if result is None:
+            raise last_error or ValueError("Generazione ontologia fallita")
         
         # Validazione e post-elaborazione
         result = self._validate_and_process(result)
