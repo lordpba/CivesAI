@@ -9,6 +9,7 @@ from flask import request, jsonify, send_file
 
 from . import simulation_bp
 from ..config import Config
+from ..services.calibration_service import CalibrationService
 from ..services.zep_entity_reader import ZepEntityReader
 from ..services.oasis_profile_generator import OasisProfileGenerator
 from ..services.simulation_manager import SimulationManager, SimulationStatus
@@ -22,6 +23,44 @@ logger = get_logger('mirofish.api.simulation')
 # Interview prompt Ottimizza il prefisso
 # L'aggiunta di questo prefisso può evitare che l'agente chiami lo strumento e risponda direttamente con il testo.
 INTERVIEW_PROMPT_PREFIX = "Combinalo con la tua personalità、Tutti i ricordi e le azioni passate, rispondimi direttamente tramite SMS senza utilizzare alcuno strumento.："
+
+
+@simulation_bp.route('/calibration/regions', methods=['GET'])
+def list_calibration_regions():
+    """Elenca le regioni NUTS-2 disponibili per la calibrazione."""
+    try:
+        service = CalibrationService()
+        return jsonify({
+            "success": True,
+            "data": {
+                "regions": service.list_regions(),
+                "count": len(service.available_regions),
+            }
+        })
+    except Exception as e:
+        logger.error(f"Impossibile elencare le regioni di calibrazione: {str(e)}")
+        return jsonify({"success": False, "error": str(e), "traceback": traceback.format_exc()}), 500
+
+
+@simulation_bp.route('/calibration/<nuts2_code>', methods=['GET'])
+def get_calibration_region(nuts2_code: str):
+    """Restituisce il profilo di calibrazione per una regione NUTS-2."""
+    try:
+        service = CalibrationService()
+        region = service.build_region_explanation(nuts2_code)
+        if not region:
+            return jsonify({
+                "success": False,
+                "error": f"Regione NUTS-2 non disponibile: {nuts2_code}"
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "data": region,
+        })
+    except Exception as e:
+        logger.error(f"Impossibile caricare la calibrazione {nuts2_code}: {str(e)}")
+        return jsonify({"success": False, "error": str(e), "traceback": traceback.format_exc()}), 500
 
 
 def optimize_interview_prompt(prompt: str) -> str:
@@ -220,6 +259,7 @@ def create_simulation():
             graph_id=graph_id,
             enable_twitter=data.get('enable_twitter', True),
             enable_reddit=data.get('enable_reddit', True),
+            nuts2_region=data.get('nuts2_region'),
         )
         
         return jsonify({
@@ -466,6 +506,7 @@ def prepare_simulation():
         entity_types_list = data.get('entity_types')
         use_llm_for_profiles = data.get('use_llm_for_profiles', True)
         parallel_profile_count = data.get('parallel_profile_count', 5)
+        nuts2_region = data.get('nuts2_region') or state.nuts2_region
         
         # ========== Ottieni il numero di entità in modo sincrono (prima di avviare l'attività in background） ==========
         # In questo modo, il front-end può ottenere immediatamente il numero totale previsto di agenti dopo aver chiamato prepare.
@@ -582,7 +623,8 @@ def prepare_simulation():
                     defined_entity_types=entity_types_list,
                     use_llm_for_profiles=use_llm_for_profiles,
                     progress_callback=progress_callback,
-                    parallel_profile_count=parallel_profile_count
+                    parallel_profile_count=parallel_profile_count,
+                    nuts2_region=nuts2_region,
                 )
                 
                 # Missione compiuta
@@ -773,6 +815,32 @@ def get_simulation(simulation_id: str):
         
     except Exception as e:
         logger.error(f"Impossibile ottenere lo stato della simulazione: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }), 500
+
+
+@simulation_bp.route('/<simulation_id>', methods=['DELETE'])
+def delete_simulation(simulation_id: str):
+    """Elimina una simulazione dalla cronologia e i relativi file."""
+    try:
+        manager = SimulationManager()
+        success = manager.delete_simulation(simulation_id)
+
+        if not success:
+            return jsonify({
+                "success": False,
+                "error": f"La simulazione non esiste o l'eliminazione non è riuscita: {simulation_id}"
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "message": f"Simulazione eliminata: {simulation_id}"
+        })
+    except Exception as e:
+        logger.error(f"Impossibile eliminare la simulazione: {simulation_id}, error={str(e)}")
         return jsonify({
             "success": False,
             "error": str(e),

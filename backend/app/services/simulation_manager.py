@@ -16,6 +16,7 @@ from ..config import Config
 from ..utils.logger import get_logger
 from .zep_entity_reader import ZepEntityReader, FilteredEntities
 from .oasis_profile_generator import OasisProfileGenerator, OasisAgentProfile
+from .calibration_service import CalibrationService
 from .simulation_config_generator import SimulationConfigGenerator, SimulationParameters
 
 logger = get_logger('mirofish.simulation')
@@ -45,6 +46,7 @@ class SimulationState:
     simulation_id: str
     project_id: str
     graph_id: str
+    nuts2_region: Optional[str] = None
     
     # Stato abilitato della piattaforma
     enable_twitter: bool = True
@@ -61,6 +63,7 @@ class SimulationState:
     # Configura le informazioni sulla build
     config_generated: bool = False
     config_reasoning: str = ""
+    calibration_profile: Optional[Dict[str, Any]] = None
     
     # dati di esecuzione
     current_round: int = 0
@@ -80,6 +83,7 @@ class SimulationState:
             "simulation_id": self.simulation_id,
             "project_id": self.project_id,
             "graph_id": self.graph_id,
+            "nuts2_region": self.nuts2_region,
             "enable_twitter": self.enable_twitter,
             "enable_reddit": self.enable_reddit,
             "status": self.status.value,
@@ -88,6 +92,7 @@ class SimulationState:
             "entity_types": self.entity_types,
             "config_generated": self.config_generated,
             "config_reasoning": self.config_reasoning,
+            "calibration_profile": self.calibration_profile,
             "current_round": self.current_round,
             "twitter_status": self.twitter_status,
             "reddit_status": self.reddit_status,
@@ -102,6 +107,7 @@ class SimulationState:
             "simulation_id": self.simulation_id,
             "project_id": self.project_id,
             "graph_id": self.graph_id,
+            "nuts2_region": self.nuts2_region,
             "status": self.status.value,
             "entities_count": self.entities_count,
             "profiles_count": self.profiles_count,
@@ -179,6 +185,7 @@ class SimulationManager:
             entity_types=data.get("entity_types", []),
             config_generated=data.get("config_generated", False),
             config_reasoning=data.get("config_reasoning", ""),
+            calibration_profile=data.get("calibration_profile"),
             current_round=data.get("current_round", 0),
             twitter_status=data.get("twitter_status", "not_started"),
             reddit_status=data.get("reddit_status", "not_started"),
@@ -196,6 +203,7 @@ class SimulationManager:
         graph_id: str,
         enable_twitter: bool = True,
         enable_reddit: bool = True,
+        nuts2_region: Optional[str] = None,
     ) -> SimulationState:
         """
         Crea una nuova simulazione
@@ -216,6 +224,7 @@ class SimulationManager:
             simulation_id=simulation_id,
             project_id=project_id,
             graph_id=graph_id,
+            nuts2_region=nuts2_region,
             enable_twitter=enable_twitter,
             enable_reddit=enable_reddit,
             status=SimulationStatus.CREATED,
@@ -234,7 +243,8 @@ class SimulationManager:
         defined_entity_types: Optional[List[str]] = None,
         use_llm_for_profiles: bool = True,
         progress_callback: Optional[callable] = None,
-        parallel_profile_count: int = 3
+        parallel_profile_count: int = 3,
+        nuts2_region: Optional[str] = None,
     ) -> SimulationState:
         """
         Preparare l'ambiente di simulazione (automazione completa)
@@ -264,6 +274,11 @@ class SimulationManager:
         
         try:
             state.status = SimulationStatus.PREPARING
+            if nuts2_region:
+                state.nuts2_region = nuts2_region
+            calibration_service = CalibrationService()
+            calibration_profile = calibration_service.get_profile(nuts2_region) if nuts2_region else None
+            state.calibration_profile = calibration_profile
             self._save_simulation_state(state)
             
             sim_dir = self._get_simulation_dir(simulation_id)
@@ -312,7 +327,7 @@ class SimulationManager:
                 )
             
             # in arrivograph_idper abilitare il recupero Zep per un contesto più ricco
-            generator = OasisProfileGenerator(graph_id=state.graph_id)
+            generator = OasisProfileGenerator(graph_id=state.graph_id, nuts2_region=nuts2_region)
             
             def profile_progress(current, total, msg):
                 if progress_callback:
@@ -342,7 +357,8 @@ class SimulationManager:
                 graph_id=state.graph_id,  # in arrivograph_idUtilizzato per il recupero Zep
                 parallel_count=parallel_profile_count,  # Number of parallel builds
                 realtime_output_path=realtime_output_path,  # Salva il percorso in tempo reale
-                output_platform=realtime_platform  # Formato di uscita
+                output_platform=realtime_platform,  # Formato di uscita
+                nuts2_region=nuts2_region,
             )
             
             state.profiles_count = len(profiles)
@@ -407,7 +423,9 @@ class SimulationManager:
                 document_text=document_text,
                 entities=filtered.entities,
                 enable_twitter=state.enable_twitter,
-                enable_reddit=state.enable_reddit
+                enable_reddit=state.enable_reddit,
+                nuts2_region=nuts2_region,
+                calibration_profile=calibration_profile,
             )
             
             if progress_callback:
@@ -425,6 +443,7 @@ class SimulationManager:
             
             state.config_generated = True
             state.config_reasoning = sim_params.generation_reasoning
+            state.calibration_profile = calibration_profile
             
             if progress_callback:
                 progress_callback(
@@ -476,6 +495,16 @@ class SimulationManager:
                         simulations.append(state)
         
         return simulations
+
+    def delete_simulation(self, simulation_id: str) -> bool:
+        """Elimina definitivamente una simulazione e i suoi artefatti locali."""
+        sim_dir = self._get_simulation_dir(simulation_id)
+        if not os.path.isdir(sim_dir):
+            return False
+
+        shutil.rmtree(sim_dir)
+        logger.info(f"Simulazione eliminata: {simulation_id}")
+        return True
     
     def get_profiles(self, simulation_id: str, platform: str = "reddit") -> List[Dict[str, Any]]:
         """ottenere simulatoAgent Profile"""

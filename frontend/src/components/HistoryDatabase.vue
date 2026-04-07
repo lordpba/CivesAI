@@ -29,6 +29,17 @@
         @mouseleave="hoveringCard = null"
         @click="navigateToProject(project)"
       >
+        <button
+          class="delete-card-btn"
+          type="button"
+          title="Elimina simulazione"
+          :disabled="loadingDeleteId === project.simulation_id"
+          @click.stop="confirmDeleteProject(project)"
+        >
+          <span v-if="loadingDeleteId === project.simulation_id">...</span>
+          <span v-else>✕</span>
+        </button>
+
         <!-- intestazione della carta：simulation_id e lo stato di disponibilità delle funzioni -->
         <div class="card-header">
           <span class="card-id">{{ formatSimulationId(project.simulation_id) }}</span>
@@ -179,6 +190,17 @@
                 <span class="btn-text">rapporto di analisi</span>
               </button>
             </div>
+            <div class="modal-danger-zone">
+              <button
+                class="modal-delete-btn"
+                type="button"
+                :disabled="loadingDeleteId === selectedProject.simulation_id"
+                @click="confirmDeleteProject(selectedProject)"
+              >
+                <span v-if="loadingDeleteId === selectedProject.simulation_id">Eliminazione...</span>
+                <span v-else>Elimina simulazione</span>
+              </button>
+            </div>
             <!-- Prompt non riproducibile -->
             <div class="modal-playback-hint">
               <span class="hint-text">Step3「Avvia la simulazione」con Step5「Interazione profonda」È necessario avviarlo durante il funzionamento e la riproduzione della cronologia non è supportata.</span>
@@ -193,7 +215,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, onActivated, watch, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { getSimulationHistory } from '../api/simulation'
+import { getSimulationHistory, deleteSimulation } from '../api/simulation'
 
 const router = useRouter()
 const route = useRoute()
@@ -205,6 +227,7 @@ const isExpanded = ref(false)
 const hoveringCard = ref(null)
 const historyContainer = ref(null)
 const selectedProject = ref(null)  // L'elemento attualmente selezionato (per le finestre pop-up）
+const loadingDeleteId = ref(null)
 let observer = null
 let isAnimating = false  // Blocco dell'animazione per evitare sfarfallio
 let expandDebounceTimer = null  // Temporizzatore anti-vibrazione
@@ -431,6 +454,32 @@ const goToReport = () => {
       params: { reportId: selectedProject.value.report_id }
     })
     closeModal()
+  }
+}
+
+const confirmDeleteProject = async (project) => {
+  if (!project?.simulation_id) return
+
+  const label = formatSimulationId(project.simulation_id)
+  const confirmed = window.confirm(`Eliminare la simulazione ${label}? L'operazione non può essere annullata.`)
+  if (!confirmed) return
+
+  loadingDeleteId.value = project.simulation_id
+  try {
+    const response = await deleteSimulation(project.simulation_id)
+    if (response?.success) {
+      if (selectedProject.value?.simulation_id === project.simulation_id) {
+        closeModal()
+      }
+      await loadHistory()
+    } else {
+      alert(response?.error || 'Impossibile eliminare la simulazione')
+    }
+  } catch (error) {
+    console.error('Errore eliminazione simulazione:', error)
+    alert(error?.message || 'Errore durante l’eliminazione della simulazione')
+  } finally {
+    loadingDeleteId.value = null
   }
 }
 
@@ -673,6 +722,38 @@ onUnmounted(() => {
   cursor: pointer;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 700ms cubic-bezier(0.23, 1, 0.32, 1), opacity 700ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.delete-card-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #F3D3D3;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #B42318;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.delete-card-btn:hover {
+  background: #FFF5F5;
+  border-color: #F5A6A6;
+}
+
+.delete-card-btn:disabled,
+.modal-delete-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .project-card:hover {
@@ -1259,6 +1340,28 @@ onUnmounted(() => {
   gap: 16px;
   padding: 20px 32px;
   background: #FFFFFF;
+}
+
+.modal-danger-zone {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 32px 20px;
+  background: #FFFFFF;
+}
+
+.modal-delete-btn {
+  border: 1px solid #F3D3D3;
+  background: #FFF5F5;
+  color: #B42318;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modal-delete-btn:hover:not(:disabled) {
+  background: #FFECEC;
 }
 
 .modal-btn {

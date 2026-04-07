@@ -61,6 +61,89 @@
             Combinando il contesto del Grafo, l'Intelligenza Artificiale identifica le entità per popolare la simulazione con comportamenti ed esperienze reali specifiche del territorio.
           </p>
 
+          <div class="calibration-panel">
+            <div class="calibration-header">
+              <div>
+                <span class="preview-title">Calibrazione regionale</span>
+                <p class="calibration-subtitle">Seleziona il NUTS-2 da associare al reality seed e visualizza i dati caricati.</p>
+              </div>
+              <span class="badge accent">{{ calibrationLoading ? 'Caricamento...' : (selectedRegionCode || 'Nessuna regione') }}</span>
+            </div>
+
+            <div class="calibration-grid">
+              <div class="calibration-select-card">
+                <label class="select-label">Regione NUTS-2</label>
+                <select v-model="selectedRegionCode" class="region-select" :disabled="calibrationLoading || calibrationRegions.length === 0">
+                  <option v-for="region in calibrationRegions" :key="region.nuts2_code" :value="region.nuts2_code">
+                    {{ region.nuts2_code }} - {{ region.name }}
+                  </option>
+                </select>
+                <p class="select-hint">I dati della regione vengono caricati subito sotto e usati nella preparazione della simulazione.</p>
+              </div>
+
+              <div class="calibration-summary-card" v-if="calibrationProfile">
+                <div class="summary-row">
+                  <span class="summary-label">Zona</span>
+                  <span class="summary-value">{{ calibrationProfile.cultural_zone }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Stile</span>
+                  <span class="summary-value">{{ calibrationProfile.derived?.communication_style }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Attività</span>
+                  <span class="summary-value">×{{ calibrationProfile.derived?.activity_multiplier }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Ritardo risposta</span>
+                  <span class="summary-value">×{{ calibrationProfile.derived?.response_delay_multiplier }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Influenza</span>
+                  <span class="summary-value">×{{ calibrationProfile.derived?.influence_multiplier }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="calibrationProfile" class="calibration-layers">
+              <div class="layer-card">
+                <span class="layer-title">Economico</span>
+                <div class="layer-item">PIL pro capite: €{{ calibrationProfile.layers?.economic?.indicators?.gdp_per_capita }}</div>
+                <div class="layer-item">Reddito mediano: €{{ calibrationProfile.layers?.economic?.indicators?.median_income_eur }}</div>
+                <div class="layer-item">Occupazione: {{ calibrationProfile.layers?.economic?.indicators?.employment_rate }}%</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.economic?.source }}</div>
+              </div>
+
+              <div class="layer-card">
+                <span class="layer-title">Culturale</span>
+                <div class="layer-item">PDI: {{ calibrationProfile.layers?.cultural?.hofstede_6d?.PDI }}</div>
+                <div class="layer-item">IDV: {{ calibrationProfile.layers?.cultural?.hofstede_6d?.IDV }}</div>
+                <div class="layer-item">UAI: {{ calibrationProfile.layers?.cultural?.hofstede_6d?.UAI }}</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.cultural?.source }}</div>
+              </div>
+
+              <div class="layer-card">
+                <span class="layer-title">Demografico</span>
+                <div class="layer-item">Età mediana: {{ calibrationProfile.layers?.demographic?.indicators?.median_age }}</div>
+                <div class="layer-item">Disoccupazione: {{ calibrationProfile.layers?.demographic?.indicators?.unemployment_rate }}%</div>
+                <div class="layer-item">Internet: {{ calibrationProfile.layers?.demographic?.indicators?.internet_users_pct }}%</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.demographic?.source }}</div>
+              </div>
+
+              <div class="layer-card">
+                <span class="layer-title">Sociale</span>
+                <div class="layer-item">Fiducia interpersonale: {{ calibrationProfile.layers?.social?.indicators?.interpersonal_trust }}</div>
+                <div class="layer-item">Fiducia istituzionale: {{ calibrationProfile.layers?.social?.indicators?.institutional_trust }}</div>
+                <div class="layer-item">Soddisfazione vita: {{ calibrationProfile.layers?.social?.indicators?.life_satisfaction_mean }}</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.social?.source }}</div>
+              </div>
+            </div>
+
+            <div v-if="calibrationProfile?.summary" class="calibration-note">
+              {{ calibrationProfile.summary }}
+            </div>
+          </div>
+
           <!-- Profiles Stats -->
           <div v-if="profiles.length > 0" class="stats-grid">
             <div class="stat-card">
@@ -638,7 +721,9 @@ import {
   getPrepareStatus, 
   getSimulationProfilesRealtime,
   getSimulationConfig,
-  getSimulationConfigRealtime 
+  getSimulationConfigRealtime,
+  getCalibrationRegions,
+  getCalibrationRegion,
 } from '../api/simulation'
 
 const props = defineProps({
@@ -662,6 +747,10 @@ const expectedTotal = ref(null)
 const simulationConfig = ref(null)
 const selectedProfile = ref(null)
 const showProfilesDetail = ref(true)
+const calibrationRegions = ref([])
+const calibrationProfile = ref(null)
+const selectedRegionCode = ref('')
+const calibrationLoading = ref(false)
 
 // Deduplicazione del registro: registra le informazioni chiave dell'ultimo output
 let lastLoggedMessage = ''
@@ -780,10 +869,12 @@ const startPrepareSimulation = async () => {
   emit('update-status', 'processing')
   
   try {
+    await ensureCalibrationLoaded()
     const res = await prepareSimulation({
       simulation_id: props.simulationId,
       use_llm_for_profiles: true,
-      parallel_profile_count: 5
+      parallel_profile_count: 5,
+      nuts2_region: selectedRegionCode.value || null,
     })
     
     if (res.success && res.data) {
@@ -818,6 +909,48 @@ const startPrepareSimulation = async () => {
   } catch (err) {
     addLog(`prepararsi all'eccezione: ${err.message}`)
     emit('update-status', 'error')
+  }
+}
+
+const loadCalibrationRegions = async () => {
+  calibrationLoading.value = true
+  try {
+    const res = await getCalibrationRegions()
+    if (res.success && res.data?.regions) {
+      calibrationRegions.value = res.data.regions
+      if (!selectedRegionCode.value && calibrationRegions.value.length > 0) {
+        selectedRegionCode.value = calibrationRegions.value[0].nuts2_code
+      }
+    }
+  } catch (err) {
+    addLog(`Impossibile caricare le regioni di calibrazione: ${err.message}`)
+  } finally {
+    calibrationLoading.value = false
+  }
+}
+
+const loadCalibrationRegion = async (nuts2Code) => {
+  if (!nuts2Code) return
+  calibrationLoading.value = true
+  try {
+    const res = await getCalibrationRegion(nuts2Code)
+    if (res.success && res.data) {
+      calibrationProfile.value = res.data
+      addLog(`Regione caricata: ${res.data.name} (${res.data.nuts2_code})`)
+    }
+  } catch (err) {
+    addLog(`Impossibile caricare la regione ${nuts2Code}: ${err.message}`)
+  } finally {
+    calibrationLoading.value = false
+  }
+}
+
+const ensureCalibrationLoaded = async () => {
+  if (!calibrationRegions.value.length) {
+    await loadCalibrationRegions()
+  }
+  if (selectedRegionCode.value && !calibrationProfile.value) {
+    await loadCalibrationRegion(selectedRegionCode.value)
   }
 }
 
@@ -983,6 +1116,9 @@ const fetchConfigRealtime = async () => {
       // Se la configurazione è stata generata
       if (data.config_generated && data.config) {
         simulationConfig.value = data.config
+        if (data.config.nuts2_region && data.config.nuts2_region !== selectedRegionCode.value) {
+          selectedRegionCode.value = data.config.nuts2_region
+        }
         addLog('✓ Generazione della configurazione della simulazione completata')
         
         // Mostra un riepilogo dettagliato della configurazione
@@ -1031,6 +1167,9 @@ const loadPreparedData = async () => {
     if (res.success && res.data) {
       if (res.data.config_generated && res.data.config) {
         simulationConfig.value = res.data.config
+        if (res.data.config.nuts2_region && res.data.config.nuts2_region !== selectedRegionCode.value) {
+          selectedRegionCode.value = res.data.config.nuts2_region
+        }
         addLog('✓ La configurazione della simulazione è stata caricata correttamente')
         
         // Mostra un riepilogo dettagliato della configurazione
@@ -1069,7 +1208,18 @@ onMounted(() => {
   // Avvia automaticamente il processo di preparazione
   if (props.simulationId) {
     addLog("Step2 Inizializzazione della configurazione dell'ambiente")
-    startPrepareSimulation()
+    loadCalibrationRegions().then(() => {
+      if (selectedRegionCode.value) {
+        loadCalibrationRegion(selectedRegionCode.value)
+      }
+      startPrepareSimulation()
+    })
+  }
+})
+
+watch(selectedRegionCode, (newValue) => {
+  if (newValue) {
+    loadCalibrationRegion(newValue)
   }
 })
 
@@ -1174,6 +1324,120 @@ onUnmounted(() => {
   color: #666;
   line-height: 1.5;
   margin-bottom: 16px;
+}
+
+.calibration-panel {
+  margin: 16px 0 20px;
+  padding: 16px;
+  border: 1px solid #E9E9E9;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
+}
+
+.calibration-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.calibration-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.calibration-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+}
+
+.calibration-select-card,
+.calibration-summary-card,
+.layer-card {
+  border: 1px solid #ECECEC;
+  border-radius: 10px;
+  background: #FFF;
+  padding: 12px;
+}
+
+.select-label,
+.layer-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.region-select {
+  width: 100%;
+  border: 1px solid #D8D8D8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.select-hint,
+.layer-source,
+.calibration-note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.45;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #EEE;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.summary-value,
+.layer-item {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+}
+
+.calibration-layers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.layer-item {
+  padding: 3px 0;
+  font-weight: 500;
+}
+
+.badge.accent {
+  background: #E8F1FF;
+  color: #1D4ED8;
+}
+
+@media (max-width: 1100px) {
+  .calibration-grid,
+  .calibration-layers {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Action Section */
@@ -1395,6 +1659,119 @@ onUnmounted(() => {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.calibration-panel {
+  margin: 16px 0 20px;
+  padding: 16px;
+  border: 1px solid #E9E9E9;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
+}
+
+.calibration-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.calibration-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.calibration-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 12px;
+}
+
+.calibration-select-card,
+.calibration-summary-card,
+.layer-card {
+  border: 1px solid #ECECEC;
+  border-radius: 10px;
+  background: #FFF;
+  padding: 12px;
+}
+
+.select-label,
+.layer-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.region-select {
+  width: 100%;
+  border: 1px solid #D8D8D8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.select-hint,
+.layer-source,
+.calibration-note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.45;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #EEE;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.summary-value,
+.layer-item {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+}
+
+.calibration-layers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.layer-item {
+  padding: 3px 0;
+  font-weight: 500;
+}
+
+.badge.accent {
+  background: #E8F1FF;
+  color: #1D4ED8;
+}
+
+@media (max-width: 1100px) {
+  .calibration-grid,
+  .calibration-layers {
+    grid-template-columns: 1fr;
+  }
 }
 
 .profile-topics {

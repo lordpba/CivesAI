@@ -158,13 +158,93 @@
         <div class="card-content">
           <p class="api-note">POST /api/simulation/create</p>
           <p class="description">La Mappa Relazionale è completata. Puoi avviare la simulazione cittadina.</p>
+          <div class="calibration-panel">
+            <div class="calibration-header">
+              <div>
+                <span class="preview-title">Calibrazione NUTS-2</span>
+                <p class="calibration-subtitle">La regione aggiorna il reality seed e guida la generazione delle personas.</p>
+              </div>
+              <button class="refresh-btn" type="button" :disabled="calibrationLoading" @click="reloadCalibrationData">
+                {{ calibrationLoading ? 'Aggiornamento...' : 'Ricarica dati' }}
+              </button>
+            </div>
+
+            <div class="calibration-grid">
+              <div class="calibration-select-card">
+                <label class="select-label">Regione NUTS-2</label>
+                <select v-model="selectedRegionCode" class="region-select" :disabled="calibrationLoading || calibrationRegions.length === 0">
+                  <option v-for="region in calibrationRegions" :key="region.nuts2_code" :value="region.nuts2_code">
+                    {{ region.nuts2_code }} - {{ region.name }}
+                  </option>
+                </select>
+                <p class="select-hint">I dati si aggiornano subito qui sotto e vengono usati nella simulazione.</p>
+              </div>
+
+              <div class="calibration-summary-card" v-if="calibrationProfile">
+                <div class="summary-row">
+                  <span class="summary-label">Zona</span>
+                  <span class="summary-value">{{ calibrationProfile.cultural_zone }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Codice NUTS</span>
+                  <span class="summary-value mono">{{ calibrationProfile.nuts2_code }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Stile</span>
+                  <span class="summary-value">{{ calibrationProfile.derived?.communication_style }}</span>
+                </div>
+                <div class="summary-row">
+                  <span class="summary-label">Attività</span>
+                  <span class="summary-value">×{{ calibrationProfile.derived?.activity_multiplier }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="calibrationProfile" class="calibration-layers">
+              <div class="layer-card">
+                <span class="layer-title">Economico</span>
+                <div class="layer-item">PIL pro capite: €{{ calibrationProfile.layers?.economic?.indicators?.gdp_per_capita }}</div>
+                <div class="layer-item">Reddito mediano: €{{ calibrationProfile.layers?.economic?.indicators?.median_income_eur }}</div>
+                <div class="layer-item">Occupazione: {{ calibrationProfile.layers?.economic?.indicators?.employment_rate }}%</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.economic?.source }}</div>
+              </div>
+
+              <div class="layer-card">
+                <span class="layer-title">Culturale</span>
+                <div class="layer-item">PDI: {{ calibrationProfile.layers?.cultural?.hofstede_6d?.PDI }}</div>
+                <div class="layer-item">IDV: {{ calibrationProfile.layers?.cultural?.hofstede_6d?.IDV }}</div>
+                <div class="layer-item">UAI: {{ calibrationProfile.layers?.cultural?.hofstede_6d?.UAI }}</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.cultural?.source }}</div>
+              </div>
+
+              <div class="layer-card">
+                <span class="layer-title">Demografico</span>
+                <div class="layer-item">Età mediana: {{ calibrationProfile.layers?.demographic?.indicators?.median_age }}</div>
+                <div class="layer-item">Disoccupazione: {{ calibrationProfile.layers?.demographic?.indicators?.unemployment_rate }}%</div>
+                <div class="layer-item">Internet: {{ calibrationProfile.layers?.demographic?.indicators?.internet_users_pct }}%</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.demographic?.source }}</div>
+              </div>
+
+              <div class="layer-card">
+                <span class="layer-title">Sociale</span>
+                <div class="layer-item">Fiducia interpersonale: {{ calibrationProfile.layers?.social?.indicators?.interpersonal_trust }}</div>
+                <div class="layer-item">Fiducia istituzionale: {{ calibrationProfile.layers?.social?.indicators?.institutional_trust }}</div>
+                <div class="layer-item">Soddisfazione vita: {{ calibrationProfile.layers?.social?.indicators?.life_satisfaction_mean }}</div>
+                <div class="layer-source">{{ calibrationProfile.layers?.social?.source }}</div>
+              </div>
+            </div>
+
+            <div v-if="calibrationProfile?.summary" class="calibration-note">
+              {{ calibrationProfile.summary }}
+            </div>
+          </div>
           <button 
             class="action-btn" 
             :disabled="currentPhase < 2 || creatingSimulation"
             @click="handleEnterEnvSetup"
           >
             <span v-if="creatingSimulation" class="spinner-sm"></span>
-            {{ creatingSimulation ? 'Allestimento in corso...' : 'Inizializza Ambiente ➝' }}
+            {{ creatingSimulation ? 'Allestimento in corso...' : 'Inizializza Ambiente con NUTS ➝' }}
           </button>
         </div>
       </div>
@@ -187,9 +267,9 @@
 </template>
 
 <script setup>
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { createSimulation } from '../api/simulation'
+import { createSimulation, getCalibrationRegions, getCalibrationRegion } from '../api/simulation'
 
 const router = useRouter()
 
@@ -207,11 +287,69 @@ defineEmits(['next-step'])
 const selectedOntologyItem = ref(null)
 const logContent = ref(null)
 const creatingSimulation = ref(false)
+const calibrationRegions = ref([])
+const calibrationProfile = ref(null)
+const selectedRegionCode = ref('')
+const calibrationLoading = ref(false)
+
+const loadCalibrationRegions = async () => {
+  calibrationLoading.value = true
+  try {
+    const res = await getCalibrationRegions()
+    if (res.success && res.data?.regions) {
+      calibrationRegions.value = res.data.regions
+      if (!selectedRegionCode.value && calibrationRegions.value.length > 0) {
+        selectedRegionCode.value = calibrationRegions.value[0].nuts2_code
+      }
+    }
+  } catch (err) {
+    console.error('Impossibile caricare le regioni di calibrazione:', err)
+  } finally {
+    calibrationLoading.value = false
+  }
+}
+
+const loadCalibrationRegion = async (nuts2Code) => {
+  if (!nuts2Code) return
+  calibrationLoading.value = true
+  try {
+    const res = await getCalibrationRegion(nuts2Code)
+    if (res.success && res.data) {
+      calibrationProfile.value = res.data
+    }
+  } catch (err) {
+    console.error(`Impossibile caricare la regione ${nuts2Code}:`, err)
+  } finally {
+    calibrationLoading.value = false
+  }
+}
+
+const reloadCalibrationData = async () => {
+  await loadCalibrationRegions()
+  if (selectedRegionCode.value) {
+    await loadCalibrationRegion(selectedRegionCode.value)
+  }
+}
+
+const ensureCalibrationLoaded = async () => {
+  if (!calibrationRegions.value.length) {
+    await loadCalibrationRegions()
+  }
+  if (selectedRegionCode.value) {
+    await loadCalibrationRegion(selectedRegionCode.value)
+  }
+}
 
 // Entra nella costruzione dell'ambiente: crea simulazione e salta
 const handleEnterEnvSetup = async () => {
   if (!props.projectData?.project_id || !props.projectData?.graph_id) {
     console.error('Informazioni mancanti sul progetto o sulla mappa')
+    return
+  }
+
+  await ensureCalibrationLoaded()
+  if (!selectedRegionCode.value) {
+    alert('Seleziona una regione NUTS-2 prima di inizializzare la simulazione.')
     return
   }
   
@@ -222,7 +360,8 @@ const handleEnterEnvSetup = async () => {
       project_id: props.projectData.project_id,
       graph_id: props.projectData.graph_id,
       enable_twitter: true,
-      enable_reddit: true
+      enable_reddit: true,
+      nuts2_region: selectedRegionCode.value
     })
     
     if (res.success && res.data?.simulation_id) {
@@ -265,6 +404,20 @@ watch(() => props.systemLogs.length, () => {
   nextTick(() => {
     if (logContent.value) {
       logContent.value.scrollTop = logContent.value.scrollHeight
+    }
+  })
+})
+
+watch(selectedRegionCode, async (newValue) => {
+  if (newValue) {
+    await loadCalibrationRegion(newValue)
+  }
+})
+
+onMounted(() => {
+  loadCalibrationRegions().then(() => {
+    if (selectedRegionCode.value) {
+      loadCalibrationRegion(selectedRegionCode.value)
     }
   })
 })
@@ -360,6 +513,136 @@ watch(() => props.systemLogs.length, () => {
   color: #666;
   line-height: 1.5;
   margin-bottom: 16px;
+}
+
+.calibration-panel {
+  margin: 12px 0 16px;
+  padding: 14px;
+  border: 1px solid #ECECEC;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 100%);
+}
+
+.calibration-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.calibration-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #666;
+  line-height: 1.45;
+}
+
+.refresh-btn {
+  border: 1px solid #DDD;
+  background: #FFF;
+  color: #222;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.calibration-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 10px;
+}
+
+.calibration-select-card,
+.calibration-summary-card,
+.layer-card {
+  border: 1px solid #ECECEC;
+  border-radius: 8px;
+  background: #FFF;
+  padding: 12px;
+}
+
+.select-label,
+.layer-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #444;
+  margin-bottom: 8px;
+}
+
+.region-select {
+  width: 100%;
+  border: 1px solid #D8D8D8;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-size: 12px;
+  background: #fff;
+}
+
+.select-hint,
+.layer-source,
+.calibration-note {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #666;
+  line-height: 1.45;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #EEE;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.summary-label {
+  font-size: 11px;
+  color: #666;
+}
+
+.summary-value,
+.layer-item {
+  font-size: 11px;
+  font-weight: 600;
+  color: #111;
+}
+
+.calibration-layers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.layer-item {
+  padding: 2px 0;
+  font-weight: 500;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@media (max-width: 1100px) {
+  .calibration-grid,
+  .calibration-layers {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Step 01 Tags */

@@ -21,6 +21,7 @@ from openai import OpenAI
 from ..config import Config
 from ..utils.logger import get_logger
 from .zep_entity_reader import EntityNode, ZepEntityReader
+from .calibration_service import CalibrationService
 
 logger = get_logger('mirofish.simulation_config')
 
@@ -150,6 +151,8 @@ class SimulationParameters:
     project_id: str
     graph_id: str
     simulation_requirement: str
+    nuts2_region: Optional[str] = None
+    calibration_profile: Optional[Dict[str, Any]] = None
     
     # Configurazione dell'ora
     time_config: TimeSimulationConfig = field(default_factory=TimeSimulationConfig)
@@ -180,6 +183,8 @@ class SimulationParameters:
             "project_id": self.project_id,
             "graph_id": self.graph_id,
             "simulation_requirement": self.simulation_requirement,
+            "nuts2_region": self.nuts2_region,
+            "calibration_profile": self.calibration_profile,
             "time_config": time_dict,
             "agent_configs": [asdict(a) for a in self.agent_configs],
             "event_config": asdict(self.event_config),
@@ -250,6 +255,8 @@ class SimulationConfigGenerator:
         enable_twitter: bool = True,
         enable_reddit: bool = True,
         progress_callback: Optional[Callable[[int, int, str], None]] = None,
+        nuts2_region: Optional[str] = None,
+        calibration_profile: Optional[Dict[str, Any]] = None,
     ) -> SimulationParameters:
         """
         Generazione intelligente di configurazioni di simulazione complete (generazione passo-passo）
@@ -286,7 +293,9 @@ class SimulationConfigGenerator:
         context = self._build_context(
             simulation_requirement=simulation_requirement,
             document_text=document_text,
-            entities=entities
+            entities=entities,
+            nuts2_region=nuts2_region,
+            calibration_profile=calibration_profile,
         )
         
         reasoning_parts = []
@@ -296,6 +305,9 @@ class SimulationConfigGenerator:
         num_entities = len(entities)
         time_config_result = self._generate_time_config(context, num_entities)
         time_config = self._parse_time_config(time_config_result, num_entities)
+
+        if calibration_profile:
+            self._apply_calibration_to_time_config(time_config, calibration_profile)
         reasoning_parts.append(f"Configurazione dell'ora: {time_config_result.get('reasoning', 'successo')}")
         
         # ========== passi2: Genera la configurazione dell'evento ==========
@@ -320,9 +332,12 @@ class SimulationConfigGenerator:
                 context=context,
                 entities=batch_entities,
                 start_idx=start_idx,
-                simulation_requirement=simulation_requirement
+                simulation_requirement=simulation_requirement,
             )
             all_agent_configs.extend(batch_configs)
+
+        if calibration_profile:
+            self._apply_calibration_to_agent_configs(all_agent_configs, calibration_profile)
         
         reasoning_parts.append(f"AgentConfigurazione: Generato con successo {len(all_agent_configs)} un")
         
@@ -363,6 +378,8 @@ class SimulationConfigGenerator:
             project_id=project_id,
             graph_id=graph_id,
             simulation_requirement=simulation_requirement,
+            nuts2_region=nuts2_region,
+            calibration_profile=calibration_profile,
             time_config=time_config,
             agent_configs=all_agent_configs,
             event_config=event_config,
@@ -381,7 +398,9 @@ class SimulationConfigGenerator:
         self,
         simulation_requirement: str,
         document_text: str,
-        entities: List[EntityNode]
+        entities: List[EntityNode],
+        nuts2_region: Optional[str] = None,
+        calibration_profile: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Costruisci un contesto LLM, tronca alla lunghezza massima"""
         
@@ -393,6 +412,11 @@ class SimulationConfigGenerator:
             f"## Requisiti di simulazione\n{simulation_requirement}",
             f"\n## Informazioni sull'entità ({len(entities)}un)\n{entity_summary}",
         ]
+
+        if nuts2_region and calibration_profile:
+            context_parts.append(
+                f"\n## Calibrazione regionale\n{self._build_calibration_context_text(calibration_profile)}"
+            )
         
         current_length = sum(len(p) for p in context_parts)
         remaining_length = self.MAX_CONTEXT_LENGTH - current_length - 500  # Lascia un margine di 500 caratteri
@@ -404,6 +428,51 @@ class SimulationConfigGenerator:
             context_parts.append(f"\n## Contenuto del documento originale\n{doc_text}")
         
         return "\n".join(context_parts)
+
+    def _build_calibration_context_text(self, calibration_profile: Dict[str, Any]) -> str:
+        layers = calibration_profile.get("layers", {})
+        derived = calibration_profile.get("derived", {})
+        economic = layers.get("economic", {}).get("indicators", {})
+        cultural = layers.get("cultural", {}).get("hofstede_6d", {})
+        demographic = layers.get("demographic", {}).get("indicators", {})
+        social = layers.get("social", {}).get("indicators", {})
+
+        return (
+            f"Regione: {calibration_profile.get('name')} ({calibration_profile.get('nuts2_code')})\n"
+            f"Zona: {calibration_profile.get('cultural_zone')}\n"
+            f"Reddito mediano: €{economic.get('median_income_eur', 'n/d')} | Occupazione: {economic.get('employment_rate', 'n/d')}% | Disoccupazione: {demographic.get('unemployment_rate', 'n/d')}%\n"
+            f"PDI: {cultural.get('PDI', 'n/d')} | IDV: {cultural.get('IDV', 'n/d')} | UAI: {cultural.get('UAI', 'n/d')}\n"
+            f"Internet: {demographic.get('internet_users_pct', 'n/d')}% | Fiducia istituzionale: {social.get('institutional_trust', 'n/d')} | Soddisfazione: {social.get('life_satisfaction_mean', 'n/d')}\n"
+            f"Indicazioni: attività ×{derived.get('activity_multiplier', 1.0)}, ritardo ×{derived.get('response_delay_multiplier', 1.0)}, influenza ×{derived.get('influence_multiplier', 1.0)}, stance {derived.get('stance', 'neutral')}"
+        )
+
+    def _apply_calibration_to_time_config(self, time_config: TimeSimulationConfig, calibration_profile: Dict[str, Any]):
+        derived = calibration_profile.get("derived", {})
+        multiplier = derived.get("activity_multiplier", 1.0)
+        time_config.agents_per_hour_min = max(1, int(round(time_config.agents_per_hour_min * multiplier)))
+        time_config.agents_per_hour_max = max(time_config.agents_per_hour_min, int(round(time_config.agents_per_hour_max * multiplier)))
+
+    def _apply_calibration_to_agent_configs(self, agent_configs: List[AgentActivityConfig], calibration_profile: Dict[str, Any]):
+        derived = calibration_profile.get("derived", {})
+        activity_multiplier = derived.get("activity_multiplier", 1.0)
+        response_multiplier = derived.get("response_delay_multiplier", 1.0)
+        influence_multiplier = derived.get("influence_multiplier", 1.0)
+        sentiment_bias = derived.get("sentiment_bias", 0.0)
+        default_stance = derived.get("stance", "neutral")
+
+        for config in agent_configs:
+            config.activity_level = round(self._clamp(config.activity_level * activity_multiplier, 0.05, 1.0), 3)
+            config.posts_per_hour = round(self._clamp(config.posts_per_hour * activity_multiplier, 0.05, 5.0), 3)
+            config.comments_per_hour = round(self._clamp(config.comments_per_hour * activity_multiplier, 0.05, 8.0), 3)
+            config.response_delay_min = max(1, int(round(config.response_delay_min * response_multiplier)))
+            config.response_delay_max = max(config.response_delay_min, int(round(config.response_delay_max * response_multiplier)))
+            config.influence_weight = round(self._clamp(config.influence_weight * influence_multiplier, 0.1, 5.0), 3)
+            config.sentiment_bias = round(self._clamp(config.sentiment_bias + sentiment_bias, -1.0, 1.0), 3)
+            if config.stance == "neutral":
+                config.stance = default_stance
+
+    def _clamp(self, value: float, minimum: float, maximum: float) -> float:
+        return max(minimum, min(maximum, value))
     
     def _summarize_entities(self, entities: List[EntityNode]) -> str:
         """Genera riepilogo dell'entità"""

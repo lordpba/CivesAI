@@ -21,6 +21,7 @@ from zep_cloud.client import Zep
 from ..config import Config
 from ..utils.logger import get_logger
 from .zep_entity_reader import EntityNode, ZepEntityReader
+from .calibration_service import CalibrationService
 
 logger = get_logger('mirofish.oasis_profile')
 
@@ -54,6 +55,8 @@ class OasisAgentProfile:
     # Informazioni sull'entità di origine
     source_entity_uuid: Optional[str] = None
     source_entity_type: Optional[str] = None
+    nuts2_region: Optional[str] = None
+    calibration_summary: Optional[str] = None
     
     created_at: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
     
@@ -135,6 +138,8 @@ class OasisAgentProfile:
             "interested_topics": self.interested_topics,
             "source_entity_uuid": self.source_entity_uuid,
             "source_entity_type": self.source_entity_type,
+            "nuts2_region": self.nuts2_region,
+            "calibration_summary": self.calibration_summary,
             "created_at": self.created_at,
         }
 
@@ -183,7 +188,8 @@ class OasisProfileGenerator:
         base_url: Optional[str] = None,
         model_name: Optional[str] = None,
         zep_api_key: Optional[str] = None,
-        graph_id: Optional[str] = None
+        graph_id: Optional[str] = None,
+        nuts2_region: Optional[str] = None,
     ):
         self.api_key = api_key or Config.LLM_API_KEY
         self.base_url = base_url or Config.LLM_BASE_URL
@@ -201,6 +207,8 @@ class OasisProfileGenerator:
         self.zep_api_key = zep_api_key or Config.ZEP_API_KEY
         self.zep_client = None
         self.graph_id = graph_id
+        self.nuts2_region = nuts2_region
+        self.calibration = CalibrationService()
         
         if self.zep_api_key:
             try:
@@ -212,7 +220,8 @@ class OasisProfileGenerator:
         self, 
         entity: EntityNode, 
         user_id: int,
-        use_llm: bool = True
+        use_llm: bool = True,
+        nuts2_region: Optional[str] = None,
     ) -> OasisAgentProfile:
         """
         Genera dall'entità ZepOASIS Agent Profile
@@ -233,6 +242,13 @@ class OasisProfileGenerator:
         
         # Costruisci informazioni contestuali
         context = self._build_entity_context(entity)
+        region = nuts2_region or self.nuts2_region
+        calibration_summary = None
+
+        if region and self.calibration.is_loaded:
+            calibration_summary = self.calibration.build_agent_calibration_context(region)
+            if calibration_summary:
+                context = f"{context}\n\n{calibration_summary}"
         
         if use_llm:
             # Utilizza LLM per generare personaggi dettagliati
@@ -241,7 +257,8 @@ class OasisProfileGenerator:
                 entity_type=entity_type,
                 entity_summary=entity.summary,
                 entity_attributes=entity.attributes,
-                context=context
+                context=context,
+                nuts2_region=region
             )
         else:
             # Utilizza le regole per generare personaggi di base
@@ -270,6 +287,8 @@ class OasisProfileGenerator:
             interested_topics=profile_data.get("interested_topics", []),
             source_entity_uuid=entity.uuid,
             source_entity_type=entity_type,
+            nuts2_region=region,
+            calibration_summary=calibration_summary,
         )
     
     def _generate_username(self, name: str) -> str:
@@ -499,7 +518,8 @@ class OasisProfileGenerator:
         entity_type: str,
         entity_summary: str,
         entity_attributes: Dict[str, Any],
-        context: str
+        context: str,
+        nuts2_region: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Utilizza LLM per generare personaggi altamente dettagliati
@@ -513,11 +533,11 @@ class OasisProfileGenerator:
         
         if is_individual:
             prompt = self._build_individual_persona_prompt(
-                entity_name, entity_type, entity_summary, entity_attributes, context
+                entity_name, entity_type, entity_summary, entity_attributes, context, nuts2_region
             )
         else:
             prompt = self._build_group_persona_prompt(
-                entity_name, entity_type, entity_summary, entity_attributes, context
+                entity_name, entity_type, entity_summary, entity_attributes, context, nuts2_region
             )
 
         # Prova più build fino al successo o al raggiungimento del numero massimo di tentativi
@@ -679,12 +699,14 @@ class OasisProfileGenerator:
         entity_type: str,
         entity_summary: str,
         entity_attributes: Dict[str, Any],
-        context: str
+        context: str,
+        nuts2_region: Optional[str] = None,
     ) -> str:
         """Costruisci suggerimenti dettagliati sulla personalità per le entità personali"""
         
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "Nessuno"
         context_str = context[:3000] if context else "nessun contesto aggiuntivo"
+        region_note = f"\nRegione NUTS-2 di riferimento: {nuts2_region}" if nuts2_region else ""
         
         return f"""Genera profili utente dettagliati della comunità locale per le entità（Contesto: Comune Italiano, es. Paperopoli）,Ripristinare la realtà esistente nella massima misura possibile.
 
@@ -695,6 +717,7 @@ Proprietà dell'entità: {attrs_str}
 
 informazioni contestuali:
 {context_str}
+{region_note}
 
 Genera JSON con i seguenti campi:
 
@@ -713,6 +736,8 @@ Genera JSON con i seguenti campi:
 6. country: Paese (utilizzare il cinese, ad es."Cina"）
 7. profession: Carriera
 8. interested_topics: serie di argomenti interessanti
+9. nuts2_region: codice NUTS-2 di riferimento, se disponibile
+10. calibration_summary: breve sintesi del profilo regionale e delle fonti usate
 
 importante:
 - Tutti i valori dei campi devono essere stringhe o numeri, non utilizzare caratteri di fine riga
@@ -728,12 +753,14 @@ importante:
         entity_type: str,
         entity_summary: str,
         entity_attributes: Dict[str, Any],
-        context: str
+        context: str,
+        nuts2_region: Optional[str] = None,
     ) -> str:
         """Costruire suggerimenti personali dettagliati per gruppi/entità istituzionali"""
         
         attrs_str = json.dumps(entity_attributes, ensure_ascii=False) if entity_attributes else "Nessuno"
         context_str = context[:3000] if context else "nessun contesto aggiuntivo"
+        region_note = f"\nRegione NUTS-2 di riferimento: {nuts2_region}" if nuts2_region else ""
         
         return f"""Genera impostazioni account ufficiali dettagliate per entità istituzionali/di gruppo（Contesto: Pubblica Amministrazione / Comune Italiano, es. Paperopoli）,Ripristinare la realtà esistente nella massima misura possibile.
 
@@ -744,6 +771,7 @@ Proprietà dell'entità: {attrs_str}
 
 informazioni contestuali:
 {context_str}
+{region_note}
 
 Genera JSON con i seguenti campi:
 
@@ -762,6 +790,8 @@ Genera JSON con i seguenti campi:
 6. country: Paese (utilizzare il cinese, ad es."Cina"）
 7. profession: Descrizione della funzione organizzativa
 8. interested_topics: Matrice dell'area di messa a fuoco
+9. nuts2_region: codice NUTS-2 di riferimento, se disponibile
+10. calibration_summary: sintesi del profilo regionale, delle fonti e della logica di calibrazione
 
 importante:
 - Tutti i valori dei campi devono essere stringhe o numeri, non sono consentiti valori null
@@ -855,7 +885,8 @@ importante:
         graph_id: Optional[str] = None,
         parallel_count: int = 5,
         realtime_output_path: Optional[str] = None,
-        output_platform: str = "reddit"
+        output_platform: str = "reddit",
+        nuts2_region: Optional[str] = None,
     ) -> List[OasisAgentProfile]:
         """
         Genera profili agente da entità in batch (supporta la generazione parallela）
@@ -923,7 +954,8 @@ importante:
                 profile = self.generate_profile_from_entity(
                     entity=entity,
                     user_id=idx,
-                    use_llm=use_llm
+                    use_llm=use_llm,
+                    nuts2_region=nuts2_region,
                 )
                 
                 # Output in tempo reale della personalità generata sulla console e sui registri
@@ -942,6 +974,7 @@ importante:
                     persona=entity.summary or f"A participant in social discussions.",
                     source_entity_uuid=entity.uuid,
                     source_entity_type=entity_type,
+                    nuts2_region=nuts2_region,
                 )
                 return idx, fallback_profile, str(e)
         

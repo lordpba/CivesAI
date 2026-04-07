@@ -68,3 +68,15 @@ export function getProject(projectId) {
     method: 'get'
   })
 }
+
+/**
+ * Elimina un progetto
+ * @param {String} projectId - ProgettoID
+ * @returns {Promise}
+ */
+export function deleteProject(projectId) {
+  return service({
+    url: `/api/graph/project/${projectId}`,
+    method: 'delete'
+  })
+}

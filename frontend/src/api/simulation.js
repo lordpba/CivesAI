@@ -25,6 +25,21 @@ export const getPrepareStatus = (data) => {
 }
 
 /**
+ * Elenca le regioni NUTS-2 disponibili per la calibrazione
+ */
+export const getCalibrationRegions = () => {
+  return service.get('/api/simulation/calibration/regions')
+}
+
+/**
+ * Ottieni il profilo di calibrazione per una regione NUTS-2
+ * @param {string} nuts2Code
+ */
+export const getCalibrationRegion = (nuts2Code) => {
+  return service.get(`/api/simulation/calibration/${nuts2Code}`)
+}
+
+/**
  * Ottieni lo stato della simulazione
  * @param {string} simulationId
  */
@@ -183,5 +198,13 @@ export const interviewAgents = (data) => {
  */
 export const getSimulationHistory = (limit = 20) => {
   return service.get('/api/simulation/history', { params: { limit } })
+}
+
+/**
+ * Elimina una simulazione storica
+ * @param {string} simulationId
+ */
+export const deleteSimulation = (simulationId) => {
+  return service.delete(`/api/simulation/${simulationId}`)
 }
 
