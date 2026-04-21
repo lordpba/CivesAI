@@ -59,10 +59,10 @@ Si prega di produrre il formato JSON, inclusa la seguente struttura：
     ],
     "edge_types": [
         {
-            "name": "Nome del tipo di relazione (inglese, UPPER_SNAKE_CASE)",
+            "name": "Nome del tipo di relazione (inglese, SCREAMING_SNAKE_CASE)",
             "description": "Breve descrizione (inglese, non più di 100 caratteri)",
             "source_targets": [
-                {"source": "Tipo di entità di origine", "target": "tipo di entità di destinazione"}
+                {"source": "Tipo di entità di origine (PascalCase)", "target": "tipo di entità di destinazione (PascalCase)"}
             ],
             "attributes": []
         }
@@ -112,7 +112,7 @@ B. **Tipi specifici (8, progettati in base al contenuto del testo)**:
 - **Nota**: i nomi degli attributi non possono essere utilizzati `name`, `uuid`, `group_id`, `created_at`, `summary` (Queste sono parole riservate al sistema)
 - Consigliato: `full_name`, `title`, `role`, `position`, `location`, `description` ecc.
 
-## Riferimento al tipo di entità (Contesto: Comune italiano, es. Paperopoli)
+## Riferimento al tipo di entità
 
 **Categoria personale (specifica）**：
 - StudenteFuoriSede: Studenti universitari fuori sede
@@ -127,7 +127,7 @@ B. **Tipi specifici (8, progettati in base al contenuto del testo)**:
 - Person: Qualsiasi persona fisica (utilizzato quando non rientra nelle categorie specifiche di cui sopra)
 
 **Tipo di organizzazione (specifico)**:
-- Comune: Ente locale, Comune (es. Comune di Paperopoli)
+- Comune: Ente locale
 - PoliziaLocale: Vigili urbani
 - PartitoPolitico: Sezione locale di un partito
 - MediaLocale: Testata giornalistica della città
@@ -280,6 +280,19 @@ Si prega di progettare tipi di entità e tipi di relazione adatti alla simulazio
     def _validate_and_process(self, result: Dict[str, Any]) -> Dict[str, Any]:
         """Risultati di validazione e post-elaborazione"""
         
+        def to_pascal_case(s: str) -> str:
+            """Converte una stringa in PascalCase"""
+            return ''.join(word.capitalize() for word in s.replace('_', ' ').replace('-', ' ').split())
+        
+        def to_screaming_snake_case(s: str) -> str:
+            """Converte una stringa in SCREAMING_SNAKE_CASE"""
+            # Sostituisci gli spazi e i trattini con underscore, poi converti tutto a maiuscolo
+            s = s.replace(' ', '_').replace('-', '_')
+            # Rimuovi underscores multipli
+            while '__' in s:
+                s = s.replace('__', '_')
+            return s.upper()
+        
         # Assicurati che il risultato sia un dizionario
         if not isinstance(result, dict):
             from ..utils.logger import get_logger
@@ -304,6 +317,8 @@ Si prega di progettare tipi di entità e tipi di relazione adatti alla simulazio
             # Assicurati che la descrizione non superi i 100 caratteri
             if len(entity.get("description", "")) > 100:
                 entity["description"] = entity["description"][:97] + "..."
+            # Converti il nome in PascalCase
+            entity["name"] = to_pascal_case(entity["name"])
         
         # Verifica il tipo di relazione
         for edge in result["edge_types"]:
@@ -313,6 +328,12 @@ Si prega di progettare tipi di entità e tipi di relazione adatti alla simulazio
                 edge["attributes"] = []
             if len(edge.get("description", "")) > 100:
                 edge["description"] = edge["description"][:97] + "..."
+            # Converti il nome in SCREAMING_SNAKE_CASE per le relazioni
+            edge["name"] = to_screaming_snake_case(edge["name"])
+            # Converti source e target in PascalCase
+            for st in edge["source_targets"]:
+                st["source"] = to_pascal_case(st["source"])
+                st["target"] = to_pascal_case(st["target"])
         
         # Zep API Limitazioni: massimo 10 tipi di entità personalizzati, massimo 10 tipi di bordi personalizzati
         MAX_ENTITY_TYPES = 10
