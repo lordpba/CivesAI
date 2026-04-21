@@ -690,7 +690,7 @@ class OasisProfileGenerator:
     
     def _get_system_prompt(self, is_individual: bool) -> str:
         """Ottieni parole tempestive dal sistema"""
-        base_prompt = "Sei un esperto nella generazione di personaggi sui social media. Genera dettagliato、I personaggi reali vengono utilizzati per la simulazione dell'opinione pubblica,Ripristinare la realtà esistente nella massima misura possibile. È necessario restituire un formato JSON valido, tutti i valori di stringa non possono contenere caratteri di fine riga senza caratteri di escape. Per favore usate l'italiano (Italiano) Generare contenuti e integrarli nel reale contesto sociale dell’Italia: ad es. un cittadino o ente nel Comune (es. Paperopoli), la cui vita è regolamentata dal sindaco e dalla giunta, che paga tasse come la TARI, ed è influenzato dall'opinione pubblica locale."
+        base_prompt = "Sei un esperto nella generazione di personaggi sui social media. Genera dettagliato、I personaggi reali vengono utilizzati per la simulazione dell'opinione pubblica,Ripristinare la realtà esistente nella massima misura possibile. È necessario restituire un formato JSON valido, tutti i valori di stringa non possono contenere caratteri di fine riga senza caratteri di escape. Per favore usate l'italiano (Italiano) Generare contenuti e integrarli nel reale contesto sociale dell’Italia: ad es. un cittadino o ente locale, la cui vita è regolamentata da un'amministrazione comunale, che paga tasse locali, ed è influenzato dall'opinione pubblica locale."
         return base_prompt
     
     def _build_individual_persona_prompt(
@@ -708,7 +708,7 @@ class OasisProfileGenerator:
         context_str = context[:3000] if context else "nessun contesto aggiuntivo"
         region_note = f"\nRegione NUTS-2 di riferimento: {nuts2_region}" if nuts2_region else ""
         
-        return f"""Genera profili utente dettagliati della comunità locale per le entità（Contesto: Comune Italiano, es. Paperopoli）,Ripristinare la realtà esistente nella massima misura possibile.
+        return f"""Genera profili utente dettagliati della comunità locale per le entità（Contesto: Comune Italiano）,Ripristinare la realtà esistente nella massima misura possibile.
 
 Nome dell'entità: {entity_name}
 Tipo di entità: {entity_type}
@@ -762,7 +762,7 @@ importante:
         context_str = context[:3000] if context else "nessun contesto aggiuntivo"
         region_note = f"\nRegione NUTS-2 di riferimento: {nuts2_region}" if nuts2_region else ""
         
-        return f"""Genera impostazioni account ufficiali dettagliate per entità istituzionali/di gruppo（Contesto: Pubblica Amministrazione / Comune Italiano, es. Paperopoli）,Ripristinare la realtà esistente nella massima misura possibile.
+        return f"""Genera impostazioni account ufficiali dettagliate per entità istituzionali/di gruppo（Contesto: Pubblica Amministrazione / Comune Italiano）,Ripristinare la realtà esistente nella massima misura possibile.
 
 Nome dell'entità: {entity_name}
 Tipo di entità: {entity_type}

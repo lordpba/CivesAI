@@ -1380,7 +1380,7 @@ Restituisce un elenco di sotto-domande in formato JSON。"""
                 simulation_id=simulation_id,
                 interviews=interviews_request,
                 platform=None,  # Nessuna piattaforma specificata, intervista su doppia piattaforma
-                timeout=180.0   # Le piattaforme doppie richiedono timeout più lunghi
+                timeout=300.0   # Le piattaforme doppie richiedono timeout più lunghi
             )
             
             logger.info(f"Ritorna l'API per interviste: {api_result.get('interviews_count', 0)} risultati, success={api_result.get('success')}")
