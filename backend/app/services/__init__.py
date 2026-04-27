@@ -37,6 +37,7 @@ from .simulation_ipc import (
     CommandType,
     CommandStatus
 )
+from .export_service import ExportService
 
 __all__ = [
     'OntologyGenerator', 
@@ -71,5 +72,6 @@ __all__ = [
     'IPCResponse',
     'CommandType',
     'CommandStatus',
+    'ExportService',
 ]
 

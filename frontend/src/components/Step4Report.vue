@@ -136,6 +136,14 @@
             </svg>
           </button>
 
+          <!-- Export Panel -->
+          <ExportPanel
+            v-if="isComplete"
+            :projectId="props.projectId"
+            :simulationId="props.simulationId"
+            :reportId="props.reportId"
+          />
+
           <div class="workflow-divider"></div>
         </div>
 
@@ -393,12 +401,14 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick, h, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAgentLog, getConsoleLog } from '../api/report'
+import ExportPanel from './ExportPanel.vue'
 
 const router = useRouter()
 
 const props = defineProps({
   reportId: String,
   simulationId: String,
+  projectId: String,
   systemLogs: Array
 })
 

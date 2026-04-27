@@ -51,6 +51,7 @@
       <div class="panel-wrapper right" :style="rightPanelStyle">
         <Step4Report
           :reportId="currentReportId"
+          :projectId="projectId"
           :simulationId="simulationId"
           :systemLogs="systemLogs"
           @add-log="addLog"
@@ -91,6 +92,8 @@ const systemLogs = ref([])
 const currentStatus = ref('processing') // processing | completed | error
 
 // --- Computed Layout Styles ---
+const projectId = computed(() => projectData.value?.project_id || null)
+
 const leftPanelStyle = computed(() => {
   if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
   if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
