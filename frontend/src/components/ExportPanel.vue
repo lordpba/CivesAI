@@ -36,6 +36,7 @@
         :disabled="isExporting || !hasData"
         class="btn btn-export-primary"
         :class="{ loading: isExporting }"
+        :title="!hasData ? 'Dati non ancora disponibili' : ''"
       >
         <span v-if="!isExporting" class="btn-content">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -82,13 +83,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
   projectId: {
     type: String,
-    required: true
+    default: null
   },
   simulationId: {
     type: String,
@@ -113,35 +114,77 @@ const exportProgress = ref(0)
 const exportSuccess = ref(false)
 const exportError = ref('')
 
-const API_BASE_URL = 'http://localhost:5000/api'
+// Usa l'IP locale del backend o 127.0.0.1 se frontend e backend sono sulla stessa macchina
+// const API_BASE_URL = 'http://localhost:5000/api'
+const API_BASE_URL = 'http://127.0.0.1:5001/api'
+// Se accedi da un altro PC nella rete, usa l'IP del backend:
+// const API_BASE_URL = 'http://192.168.0.64:5001/api'
 
 const hasData = computed(() => {
-  return statusData.value.project_available || statusData.value.ontology_available
+  // Se abbiamo un projectId, consentiamo l'export anche se lo status check ha fallito
+  // (assumiamo che i dati esistano)
+  return props.projectId && (statusData.value.project_available || statusData.value.ontology_available || true)
 })
 
 onMounted(async () => {
+  // Controlla subito al mount
   await checkExportStatus()
 })
 
+// Re-controlla quando i props cambiano
+watch(() => [props.projectId, props.simulationId, props.reportId], async () => {
+  await checkExportStatus()
+}, { immediate: true })
+
 const checkExportStatus = async () => {
+  // Se non abbiamo un projectId, non fare nulla
+  if (!props.projectId) {
+    console.warn('[ExportPanel] projectId non disponibile')
+    return
+  }
+
   try {
-    const response = await axios.post(`${API_BASE_URL}/export/status`, {
+    console.log('[ExportPanel] Controllo stato export per', {
       project_id: props.projectId,
       simulation_id: props.simulationId,
       report_id: props.reportId
     })
 
+    const response = await axios.post(`${API_BASE_URL}/export/status`, {
+      project_id: props.projectId,
+      simulation_id: props.simulationId,
+      report_id: props.reportId
+    }, {
+      timeout: 5000 // timeout di 5 secondi
+    })
+
+    console.log('[ExportPanel] Risposta status:', response.data)
+
     if (response.data.success) {
       statusData.value = response.data.data
       showStatus.value = true
+      console.log('[ExportPanel] Stato aggiornato:', statusData.value)
+    } else {
+      console.warn('[ExportPanel] Risposta non success:', response.data)
     }
   } catch (error) {
-    console.warn('Errore nel controllo dello stato di export:', error)
+    console.error('[ExportPanel] Errore nel controllo dello stato di export:', error.message)
+    // Fallback: se l'API non risponde, consenti comunque l'export (assumiamo i dati esistano)
+    if (props.projectId) {
+      statusData.value.project_available = true
+      statusData.value.ontology_available = true
+      showStatus.value = true
+    }
   }
 }
 
 const exportProject = async () => {
   if (isExporting.value) return
+  
+  if (!props.projectId) {
+    exportError.value = 'Project ID non disponibile'
+    return
+  }
 
   isExporting.value = true
   exportSuccess.value = false
@@ -149,6 +192,12 @@ const exportProject = async () => {
   exportProgress.value = 0
 
   try {
+    console.log('[ExportPanel] Inizio export per', {
+      project_id: props.projectId,
+      simulation_id: props.simulationId,
+      report_id: props.reportId
+    })
+
     const response = await axios.post(
       `${API_BASE_URL}/export/package`,
       {
@@ -158,13 +207,17 @@ const exportProject = async () => {
       },
       {
         responseType: 'blob',
+        timeout: 60000, // 60 secondi timeout
         onDownloadProgress: (progressEvent) => {
           if (progressEvent.total) {
             exportProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            console.log('[ExportPanel] Progress:', exportProgress.value + '%')
           }
         }
       }
     )
+
+    console.log('[ExportPanel] Export completato, dimensione:', response.data.size)
 
     // Crea un blob e scarica il file
     const url = window.URL.createObjectURL(new Blob([response.data]))
@@ -181,8 +234,8 @@ const exportProject = async () => {
       exportSuccess.value = false
     }, 5000)
   } catch (error) {
-    console.error('Errore durante l\'export:', error)
-    exportError.value = error.response?.data?.error || 'Errore durante l\'esportazione'
+    console.error('[ExportPanel] Errore durante l\'export:', error)
+    exportError.value = error.response?.data?.error || error.message || 'Errore durante l\'esportazione'
     setTimeout(() => {
       exportError.value = ''
     }, 5000)
